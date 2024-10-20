@@ -116,7 +116,7 @@ def dump_supb(f, offset, cluster):
         "-------------------Superblock-------------------\n"
         f"Offset: {hex(cursor)}\n"
         f"Volume Signature: {vol_sig:08X}\n"
-        f"Logical Cluster Number: {"" if not 0 else lcn23}{lcn01}\n"
+        f"Logical Cluster Number: {'' if not 0 else lcn23}{lcn01}\n"
         f"Table Identifier: {tableIdHigh:08X}{tableIdLow:08X}\n"
         f"GUID: {guid3:04X}{guid2:04X}{guid1:04X}{guid0:04X}\n"
         f"Page status: {message}\n"
