@@ -4,8 +4,8 @@ import os, struct
 import lib.ReFScan as ReFScan
 
 def main():
-    # image = r"\\.\D:/VM/ReFS/ReFS-0-flat.vmdk"
-    image = r"\\.\D:"
+    image = r"\\.\D:/VM/ReFS/ReFS-0-flat.vmdk"
+    # image = r"\\.\D:"
     f = open(image, "rb")                                               # Scan Filesystem
     vbrOffset = ReFScan.get_offset(f, "52654653000000")                 # Get Volume Boot Record
     vbrData = ReFScan.dump_vbr(f, vbrOffset)  # Dump results

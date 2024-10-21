@@ -124,7 +124,7 @@ def dump_supb(f, offset, cluster):
         f"GUID: {data["guidResult"]["guid3"]:04X}{data["guidResult"]["guid2"]:04X}{data["guidResult"]["guid1"]:04X}{data["guidResult"]["guid0"]:04X}\n"
         f"Page status: {data["guidResult"]["message"]}\n"
         f"Superblock Version: {data["superblockVersion"]}\n"
-        f"Checkpoint offsets: {checkpointPtr0}, {checkpointPtr1}"
+        f"Checkpoint offsets: {data["checkpointPtr0"]}, {data["checkpointPtr1"]}"
         )
     return data
     
