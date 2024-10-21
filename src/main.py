@@ -11,7 +11,7 @@ def main():
     vbrData = ReFScan.dump_vbr(f, vbrOffset)  # Dump results
     cluster = vbrData["bytesPerSector"]*vbrData["sectorsPerCluster"]                          # Cluster size
     supbData = ReFScan.dump_supb(f, vbrOffset, cluster)             # Dump Superblock
-    ReFScan.dump_chkp(f, int(supbData["checkpointPtr0"],16))
+    chkpData = ReFScan.dump_chkp(f, int(supbData["checkpointPtr0"],16))
     f.close()
     return 0
 

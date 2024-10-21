@@ -64,9 +64,8 @@ def compute_guid(guid, vol_sig):
     return data
 
 def dump_vbr(f, offset):
-    chunk=4096
     f.seek(offset)
-    fData = f.read(chunk).hex()
+    fData = f.read(4096).hex()
     data = {                                                # Offset    Length  Description
         "fs": fData[6:6+16],                                # 0x03      8       Filesystem Name
         "sectors": unpack(fData[48:48+16], "<Q"),           # 0x18      8       Sectors in volume
@@ -98,13 +97,13 @@ def dump_supb(f, offset, cluster):
     substring="53555042"            # SUPB
     cursor = offset+30*cluster      # Cluster 30 + offset
     f.seek(cursor)
-    hexdump = f.read(cursor).hex()
+    hexdump = f.read(4096).hex()
     # Failed to find SUPB signature
     if substring!=hexdump[0:8]:
         print("The superblock seems to be in the wrong spot! Performing manual scan!")
         cursor = get_offset(f, substring, offset)
         f.seek(cursor)
-        hexdump = f.read(cursor).hex()
+        hexdump = f.read(4096).hex()
     pageHeader = dump_page_header(f, cursor)
     data={                                                                      # Offset    Length  Description
         "pageHeader": pageHeader,                                               # 0x00      50      Page Header
@@ -130,6 +129,31 @@ def dump_supb(f, offset, cluster):
     return data
     
 def dump_chkp(f, offset):
-    pageHeader = dump_page_header(f, offset)
-    print(pageHeader)
-    return 0
+    f.seek(offset)
+    hexdump = f.read(4096).hex()
+    
+    data = {                                        # Offset    Length  Description
+        "pageHeader": dump_page_header(f, offset),  # 0x00      50      Page Header
+        "majVer": None,                             # 0x54      2       @zheryee TODO maybe not needed since already found in vbr
+        "minVer": None,                             # 0x56      2       @zheryee TODO maybe not needed since already found in vbr
+        "chkpVirtualClock": None,                   # 0x60      8       @zheryee TODO
+        "allocVirtualClock": None,                  # 0x68      8       @zheryee TODO
+        "oldestLogRecordPtr": None,                 # 0x70      8       @zheryee TODO dunno if its a pointer, TBC
+        "objIdTable": None,                         # 0x94      4       @weichen TODO
+        "medAllocTable": None,                      # 0x98      4       @weichen TODO
+        "containerAllocTable": None,                # 0x9c      4       @weichen TODO
+        "schemaTable": None,                        # 0xa0      4       @unclehengz TODO
+        "parentChildTable": None,                   # 0xa4      4       @unclehengz TODO
+        "objIdTableDup": None,                      # 0xa8      4       @unclehengz TODO
+        "blockRefCountTable": None,                 # 0xac      4       @verno TODO
+        "containerTable": None,                     # 0xb0      4       @verno TODO
+        "containerTableDup": None,                  # 0xb4      4       @verno  TODO
+        "schemaTableDup": None,                     # 0xb8      4       @verno TODO
+        "containerIndexTable": None,                # 0xbc      4       @yqy TODO
+        "integrityStateTable": None,                # 0xc0      4       @yqy TODO
+        "smallAllocTable": None,                    # 0xc4      4       @yqy TODO
+    }
+    print("\n-------------------Checkpoint-------------------")
+    for x,y in data.items():
+        print(f"{x : <30}: {y}")
+    return data
