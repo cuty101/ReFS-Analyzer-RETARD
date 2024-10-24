@@ -6,7 +6,6 @@ def unpack(s, type):
     s = struct.unpack_from(type, s)
     return s[0]
 
-
 # Scans the filesystem for the first hit of a substring
 def get_offset(f, substring, cursor=0):
     print(f"Scanning filesystem for {substring}!")
@@ -132,26 +131,26 @@ def dump_chkp(f, offset):
     f.seek(offset)
     hexdump = f.read(4096).hex()
     
-    data = {                                        # Offset    Length  Description
-        "pageHeader": dump_page_header(f, offset),  # 0x00      50      Page Header
-        "majVer": None,                             # 0x54      2       @zheryee TODO maybe not needed since already found in vbr
-        "minVer": None,                             # 0x56      2       @zheryee TODO maybe not needed since already found in vbr
-        "chkpVirtualClock": None,                   # 0x60      8       @zheryee TODO
-        "allocVirtualClock": None,                  # 0x68      8       @zheryee TODO
-        "oldestLogRecordPtr": None,                 # 0x70      8       @zheryee TODO dunno if its a pointer, TBC
-        "objIdTable": None,                         # 0x94      4       @weichen TODO
-        "medAllocTable": None,                      # 0x98      4       @weichen TODO
-        "containerAllocTable": None,                # 0x9c      4       @weichen TODO
-        "schemaTable": None,                        # 0xa0      4       @unclehengz TODO
-        "parentChildTable": None,                   # 0xa4      4       @unclehengz TODO
-        "objIdTableDup": None,                      # 0xa8      4       @unclehengz TODO
-        "blockRefCountTable": None,                 # 0xac      4       @verno TODO
-        "containerTable": None,                     # 0xb0      4       @verno TODO
-        "containerTableDup": None,                  # 0xb4      4       @verno  TODO
-        "schemaTableDup": None,                     # 0xb8      4       @verno TODO
-        "containerIndexTable": None,                # 0xbc      4       @yqy TODO
-        "integrityStateTable": None,                # 0xc0      4       @yqy TODO
-        "smallAllocTable": None,                    # 0xc4      4       @yqy TODO
+    data = {                                                        # Offset    Length  Description
+        "pageHeader": dump_page_header(f, offset),                  # 0x00      50      Page Header
+        "majVer": unpack(hexdump[168:174], "<B"),                   # 0x54      2       @zheryee TODO maybe not needed since already found in vbr
+        "minVer": unpack(hexdump[172:176], "<B"),                   # 0x56      2       @zheryee TODO maybe not needed since already found in vbr
+        "chkpVirtualClock": None,                                   # 0x60      8       @zheryee TODO
+        "allocVirtualClock": None,                                  # 0x68      8       @zheryee TODO
+        "oldestLogRecordPtr": None,                                 # 0x70      8       @zheryee TODO dunno if its a pointer, TBC
+        "objIdTable": None,                                         # 0x94      4       @weichen TODO
+        "medAllocTable": None,                                      # 0x98      4       @weichen TODO
+        "containerAllocTable": None,                                # 0x9c      4       @weichen TODO
+        "schemaTable": hex(unpack(hexdump[320:320+8], "<L")),       # 0xa0      4       @unclehengz TODO
+        "parentChildTable": hex(unpack(hexdump[328:328+8], "<L")),  # 0xa4      4       @unclehengz TODO
+        "objIdTableDup": hex(unpack(hexdump[336:336+8], "<L")),     # 0xa8      4       @unclehengz TODO
+        "blockRefCountTable": None,                                 # 0xac      4       @verno TODO
+        "containerTable": None,                                     # 0xb0      4       @verno TODO
+        "containerTableDup": None,                                  # 0xb4      4       @verno  TODO
+        "schemaTableDup": None,                                     # 0xb8      4       @verno TODO
+        "containerIndexTable": None,                                # 0xbc      4       @yqy TODO
+        "integrityStateTable": None,                                # 0xc0      4       @yqy TODO
+        "smallAllocTable": None,                                    # 0xc4      4       @yqy TODO
     }
     print("\n-------------------Checkpoint-------------------")
     for x,y in data.items():
