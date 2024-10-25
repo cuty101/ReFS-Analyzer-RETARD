@@ -131,6 +131,10 @@ def dump_chkp(f, offset):
     f.seek(offset)
     hexdump = f.read(4096).hex()
     
+    ptrSchemaTable = unpack(hexdump[320:320+8], "<L")
+    ptrParentChildTable = unpack(hexdump[328:328+8], "<L")
+    ptrObjIdTableDup = unpack(hexdump[336:336+8], "<L")
+
     data = {                                                        # Offset    Length  Description
         "pageHeader": dump_page_header(f, offset),                  # 0x00      50      Page Header
         "majVer": unpack(hexdump[168:174], "<B"),                   # 0x54      2       @zheryee TODO maybe not needed since already found in vbr
@@ -141,9 +145,9 @@ def dump_chkp(f, offset):
         "objIdTable": None,                                         # 0x94      4       @weichen TODO
         "medAllocTable": None,                                      # 0x98      4       @weichen TODO
         "containerAllocTable": None,                                # 0x9c      4       @weichen TODO
-        "schemaTable": hex(unpack(hexdump[320:320+8], "<L")),       # 0xa0      4       @unclehengz TODO
-        "parentChildTable": hex(unpack(hexdump[328:328+8], "<L")),  # 0xa4      4       @unclehengz TODO
-        "objIdTableDup": hex(unpack(hexdump[336:336+8], "<L")),     # 0xa8      4       @unclehengz TODO
+        "schemaTable": hex(ptrSchemaTable + offset),                # 0xa0      4       @unclehengz TODO
+        "parentChildTable": hex(ptrParentChildTable + offset),      # 0xa4      4       @unclehengz TODO
+        "objIdTableDup": hex(ptrObjIdTableDup + offset),            # 0xa8      4       @unclehengz TODO
         "blockRefCountTable": None,                                 # 0xac      4       @verno TODO
         "containerTable": None,                                     # 0xb0      4       @verno TODO
         "containerTableDup": None,                                  # 0xb4      4       @verno  TODO
