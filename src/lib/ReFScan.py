@@ -135,13 +135,17 @@ def dump_chkp(f, offset):
     ptrParentChildTable = unpack(hexdump[328:328+8], "<L")
     ptrObjIdTableDup = unpack(hexdump[336:336+8], "<L")
 
+    chkpVirtualClock = unpack(hexdump[192:208], "<Q")
+    allocVirtualClock = unpack(hexdump[208:224], "<Q")
+    oldestLogRecordPtr = unpack(hexdump[224:240], "<Q")
+
     data = {                                                        # Offset    Length  Description
         "pageHeader": dump_page_header(f, offset),                  # 0x00      50      Page Header
-        "majVer": unpack(hexdump[168:174], "<B"),                   # 0x54      2       @zheryee TODO maybe not needed since already found in vbr
-        "minVer": unpack(hexdump[172:176], "<B"),                   # 0x56      2       @zheryee TODO maybe not needed since already found in vbr
-        "chkpVirtualClock": None,                                   # 0x60      8       @zheryee TODO
-        "allocVirtualClock": None,                                  # 0x68      8       @zheryee TODO
-        "oldestLogRecordPtr": None,                                 # 0x70      8       @zheryee TODO dunno if its a pointer, TBC
+        "majVer": unpack(hexdump[168:174], "<B"),              # 0x54      2       Filesystem Major Version
+        "minVer": unpack(hexdump[172:176], "<B"),              # 0x56      2       Filesystem Mini Version
+        "chkpVirtualClock": hex(chkpVirtualClock),                  # 0x60      8       Clock updated when checkpoint structure is rewritten i.e. 0x69 --> 0x6b
+        "allocVirtualClock": hex(allocVirtualClock),                # 0x68      8       @zheryee TODO Still figuring out what it does
+        "oldestLogRecordPtr": hex(oldestLogRecordPtr),              # 0x70      8       @zheryee TODO Still trying to figure out, not sure if pointer bc value larger than disk size
         "objIdTable": None,                                         # 0x94      4       @weichen TODO
         "medAllocTable": None,                                      # 0x98      4       @weichen TODO
         "containerAllocTable": None,                                # 0x9c      4       @weichen TODO
