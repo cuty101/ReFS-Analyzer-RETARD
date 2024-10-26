@@ -4,10 +4,11 @@ import os, struct
 import lib.ReFScan as ReFScan
 
 def main():
-    image = r"\\.\D:/VM/ReFS/ReFS-0-flat.vmdk"
+    # image = r"\\.\D:/VM/ReFS/ReFS-0-flat.vmdk"
     # image = r"\\.\D:\Virtual Machines\Windows 10 x64/ReFS-flat.vmdk"
     # image = r"\\.\D:"
     # image = r"\\.\C:/Users/yhcha/Documents/Virtual Machines/Windows 10 x64/Windows 10-x64-0-ReFS-flat.vmdk"
+    # image = r"\\.\D:\Virtual Machines\ReFS\ReFS-flat.vmdk" #"yqy's one"
     f = open(image, "rb")                                               # Scan Filesystem
     vbrOffset = ReFScan.get_offset(f, "52654653000000")                 # Get Volume Boot Record
     vbrData = ReFScan.dump_vbr(f, vbrOffset)                            # Dump results

@@ -135,6 +135,10 @@ def dump_chkp(f, offset):
     ptrParentChildTable = unpack(hexdump[328:328+8], "<L")
     ptrObjIdTableDup = unpack(hexdump[336:336+8], "<L")
 
+    ptrcontainerIndexTable = unpack(hexdump[376:376+8], "<L")
+    ptrintegrityStateTable = unpack(hexdump[384:384+8], "<L")
+    ptrsmallAllocTable = unpack(hexdump[392:392+8], "<L")
+
     chkpVirtualClock = unpack(hexdump[192:208], "<Q")
     allocVirtualClock = unpack(hexdump[208:224], "<Q")
     oldestLogRecordPtr = unpack(hexdump[224:240], "<Q")
@@ -156,9 +160,9 @@ def dump_chkp(f, offset):
         "containerTable": None,                                     # 0xb0      4       @verno TODO
         "containerTableDup": None,                                  # 0xb4      4       @verno  TODO
         "schemaTableDup": None,                                     # 0xb8      4       @verno TODO
-        "containerIndexTable": None,                                # 0xbc      4       @yqy TODO
-        "integrityStateTable": None,                                # 0xc0      4       @yqy TODO
-        "smallAllocTable": None,                                    # 0xc4      4       @yqy TODO
+        "containerIndexTable": hex(ptrcontainerIndexTable + offset),# 0xbc      4       @yqy TODO Pointed correctly @ 0x1034000, output is the location of where offset is stored
+        "integrityStateTable": hex(ptrintegrityStateTable + offset),# 0xc0      4       @yqy TODO Pointed wrongly @ 0x7808000, output is the location of where offset is stored but maybe I did it wrongly
+        "smallAllocTable": hex(ptrsmallAllocTable + offset),        # 0xc4      4       @yqy TODO Pointed correctly @ 0xB600000, output is the location of where offset is stored
     }
     print("\n-------------------Checkpoint-------------------")
     for x,y in data.items():
