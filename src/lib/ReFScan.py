@@ -159,21 +159,6 @@ def dump_chkp(f, offset, vbrOffset, cluster):
         "chkpVirtualClock": hex(chkpVirtualClock),                  # 0x60      8       Clock updated when checkpoint structure is rewritten i.e. 0x69 --> 0x6b
         "allocVirtualClock": hex(allocVirtualClock),                # 0x68      8       @zheryee TODO Still figuring out what it does
         "oldestLogRecordPtr": hex(oldestLogRecordPtr),              # 0x70      8       @zheryee TODO Still trying to figure out, not sure if pointer bc value larger than disk size
-<<<<<<< Updated upstream
-        "objIdTable": None,                                         # 0x94      4       @weichen TODO
-        "medAllocTable": None,                                      # 0x98      4       @weichen TODO
-        "containerAllocTable": None,                                # 0x9c      4       @weichen TODO
-        "schemaTable": hex(ptrSchemaTable + offset),                # 0xa0      4       @unclehengz TODO
-        "parentChildTable": hex(ptrParentChildTable + offset),      # 0xa4      4       @unclehengz TODO
-        "objIdTableDup": hex(ptrObjIdTableDup + offset),            # 0xa8      4       @unclehengz TODO
-        "blockRefCountTable": None,                                 # 0xac      4       @verno TODO
-        "containerTable": None,                                     # 0xb0      4       @verno TODO
-        "containerTableDup": None,                                  # 0xb4      4       @verno  TODO
-        "schemaTableDup": None,                                     # 0xb8      4       @verno TODO
-        "containerIndexTable": hex(ptrcontainerIndexTable + offset),# 0xbc      4       @yqy TODO Pointed correctly @ 0x1034000, output is the location of where offset is stored
-        "integrityStateTable": hex(ptrintegrityStateTable + offset),# 0xc0      4       @yqy TODO Pointed wrongly @ 0x7808000, output is the location of where offset is stored but maybe I did it wrongly
-        "smallAllocTable": hex(ptrsmallAllocTable + offset),        # 0xc4      4       @yqy TODO Pointed correctly @ 0xB600000, output is the location of where offset is stored
-=======
         }
     ptrData={
         "objIdTable": getOffsetFromPtr(0x94),                       # 0x94      4       @weichen TODO
@@ -189,7 +174,6 @@ def dump_chkp(f, offset, vbrOffset, cluster):
         "containerIndexTable": getOffsetFromPtr(0xbc),              # 0xbc      4       @yqy TODO
         "integrityStateTable": getOffsetFromPtr(0xc0),              # 0xc0      4       @yqy TODO
         "smallAllocTable": getOffsetFromPtr(0xc4),                  # 0xc4      4       @yqy TODO
->>>>>>> Stashed changes
     }
     print("\n-------------------Checkpoint-------------------")
     for x,y in data.items():
