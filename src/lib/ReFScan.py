@@ -43,7 +43,7 @@ def dump_page_header(f, cursor):
     lcn2 = struct.pack("<Q",int(hexdump[96:112],16))
     lcn3 = struct.pack("<Q",int(hexdump[112:128],16))
     lcn = lcn3+lcn2+lcn1+lcn0
-    data['lcn']=int.from_bytes(lcn, byteorder='big')
+    # data['lcn']=int.from_bytes(lcn, byteorder='big')
     return data
 
 # vol_sig = g1 xor g2 xor g3 xor g4 (used in pages)
@@ -73,6 +73,7 @@ def dump_vbr(f, offset):
         "majVer": unpack(fData[80:82], "<B"),               # 0x28      1       Filesystem Major Version
         "minVer": unpack(fData[82:84], "<B"),               # 0x29      1       Filesystem Minor Version
         "volSerialNum": unpack(fData[112:112+16], "<Q"),    # 0x38      8       Volume Serial Number
+        "bytesPerContainer": unpack(fData[128:128+16], "<Q")
     }
     data['totalVol']=data['sectors']*data['bytesPerSector']/(1024**3)
     print(
@@ -86,6 +87,7 @@ def dump_vbr(f, offset):
         f"Total space: {data['totalVol']} GB\n"
         f"ReFS Version: {data['majVer']}.{data['minVer']}\n"
         f"Volume Serial Number: {data['volSerialNum']:X}\n"
+        f"Bytes per Container: {data['bytesPerContainer']}\n"
         # f"VBR Backup: Offset {hex(offset+sectors*bytesPerSector-bytesPerSector)}"
     )
     return data
@@ -118,7 +120,7 @@ def dump_supb(f, offset, cluster):
         "-------------------Superblock-------------------\n"
         f"Offset: {hex(cursor)}\n"
         f"Volume Signature: {data['pageHeader']['vol_sig']:08X}\n"
-        f"Logical Cluster Number: {data['pageHeader']['lcn']}\n"
+        f"Logical Cluster Number: {data['pageHeader']['lcn0']}\n"
         f"Table Identifier: {data['pageHeader']['tableIdHigh']:08X}{data['pageHeader']['tableIdLow']:08X}\n"
         f"GUID: {data['guidResult']['guid3']:04X}{data['guidResult']['guid2']:04X}{data['guidResult']['guid1']:04X}{data['guidResult']['guid0']:04X}\n"
         f"Page status: {data['guidResult']['message']}\n"
@@ -127,9 +129,16 @@ def dump_supb(f, offset, cluster):
         )
     return data
     
-def dump_chkp(f, offset):
+def dump_chkp(f, offset, vbrOffset, cluster):
     f.seek(offset)
     hexdump = f.read(4096).hex()
+    
+    def getOffsetFromPtr(ptrOffset):
+        ptrOffset*=2
+        ptr = unpack(hexdump[ptrOffset:ptrOffset+8], "<L")*2
+        ptr = hex(unpack(hexdump[ptr:ptr+4],"<H")*cluster+vbrOffset)
+        ptr = int(ptr, 16)
+        return ptr
     
     ptrSchemaTable = unpack(hexdump[320:320+8], "<L")
     ptrParentChildTable = unpack(hexdump[328:328+8], "<L")
@@ -145,11 +154,12 @@ def dump_chkp(f, offset):
 
     data = {                                                        # Offset    Length  Description
         "pageHeader": dump_page_header(f, offset),                  # 0x00      50      Page Header
-        "majVer": unpack(hexdump[168:174], "<B"),              # 0x54      2       Filesystem Major Version
-        "minVer": unpack(hexdump[172:176], "<B"),              # 0x56      2       Filesystem Mini Version
+        "majVer": unpack(hexdump[168:174], "<B"),                   # 0x54      2       Filesystem Major Version
+        "minVer": unpack(hexdump[172:176], "<B"),                   # 0x56      2       Filesystem Mini Version
         "chkpVirtualClock": hex(chkpVirtualClock),                  # 0x60      8       Clock updated when checkpoint structure is rewritten i.e. 0x69 --> 0x6b
         "allocVirtualClock": hex(allocVirtualClock),                # 0x68      8       @zheryee TODO Still figuring out what it does
         "oldestLogRecordPtr": hex(oldestLogRecordPtr),              # 0x70      8       @zheryee TODO Still trying to figure out, not sure if pointer bc value larger than disk size
+<<<<<<< Updated upstream
         "objIdTable": None,                                         # 0x94      4       @weichen TODO
         "medAllocTable": None,                                      # 0x98      4       @weichen TODO
         "containerAllocTable": None,                                # 0x9c      4       @weichen TODO
@@ -163,8 +173,27 @@ def dump_chkp(f, offset):
         "containerIndexTable": hex(ptrcontainerIndexTable + offset),# 0xbc      4       @yqy TODO Pointed correctly @ 0x1034000, output is the location of where offset is stored
         "integrityStateTable": hex(ptrintegrityStateTable + offset),# 0xc0      4       @yqy TODO Pointed wrongly @ 0x7808000, output is the location of where offset is stored but maybe I did it wrongly
         "smallAllocTable": hex(ptrsmallAllocTable + offset),        # 0xc4      4       @yqy TODO Pointed correctly @ 0xB600000, output is the location of where offset is stored
+=======
+        }
+    ptrData={
+        "objIdTable": getOffsetFromPtr(0x94),                       # 0x94      4       @weichen TODO
+        "medAllocTable": getOffsetFromPtr(0x98),                    # 0x98      4       @weichen TODO
+        "containerAllocTable": getOffsetFromPtr(0x9c),              # 0x9c      4       @weichen TODO
+        "schemaTable": getOffsetFromPtr(0xa0),                      # 0xa0      4       @unclehengz TODO
+        "parentChildTable": getOffsetFromPtr(0xa4),                 # 0xa4      4       @unclehengz TODO
+        "objIdTableDup": getOffsetFromPtr(0xa8),                    # 0xa8      4       @unclehengz TODO
+        "blockRefCountTable": getOffsetFromPtr(0xac),               # 0xac      4       @verno TODO
+        "containerTable": getOffsetFromPtr(0xb0),                   # 0xb0      4       @verno TODO
+        "containerTableDup": getOffsetFromPtr(0xb4),                # 0xb4      4       @verno  TODO
+        "schemaTableDup": getOffsetFromPtr(0xb8),                   # 0xb8      4       @verno TODO
+        "containerIndexTable": getOffsetFromPtr(0xbc),              # 0xbc      4       @yqy TODO
+        "integrityStateTable": getOffsetFromPtr(0xc0),              # 0xc0      4       @yqy TODO
+        "smallAllocTable": getOffsetFromPtr(0xc4),                  # 0xc4      4       @yqy TODO
+>>>>>>> Stashed changes
     }
     print("\n-------------------Checkpoint-------------------")
     for x,y in data.items():
         print(f"{x : <30}: {y}")
-    return data
+    for x,y in ptrData.items():
+        print(f"{x : <30}: {y}")
+    return ptrData
