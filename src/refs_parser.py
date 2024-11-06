@@ -1,72 +1,53 @@
+import os
 import struct
 
-def read_vbr(f):
-    # Read Volume Boot Record (VBR) to find the cluster offset
-    f.seek(0x30)  # Offset in VBR for the cluster size
-    cluster = struct.unpack("<H", f.read(2))[0]
-    print(f"Cluster size: {cluster} bytes")
-    return cluster
+# Local Import
+import lib.ReFScan as ReFScan
 
-def getOffsetFromPtr(ptr, vbrOffset, cluster):
-    # Translate pointer to file offset
-    return (ptr * cluster) + vbrOffset
-
-def dump_chkp(f, vbrOffset, cluster):
-    # Go to checkpoint region
-    f.seek(vbrOffset + 0x1000)
-    chkpData = f.read(4096)
+def main():
+    # Provide the path to your ReFS image file
+    # Example path (uncomment and replace as needed):
+    # image = r"\\.\D:/VM/ReFS/ReFS-0-flat.vmdk"
+    # image = r"\\.\D:\Virtual Machines\Windows 10 x64/ReFS-flat.vmdk"
+    # image = r"\\.\D:"
+    # image = r"\\.\C:/Users/yhcha/Documents/Virtual Machines/Windows 10 x64/Windows 10-x64-0-ReFS-flat.vmdk"
     
-    objIdTable = struct.unpack("<Q", chkpData[0x94:0x9C])[0]
-    medAllocTable = struct.unpack("<Q", chkpData[0x9C:0xA4])[0]
-    containerAllocTable = struct.unpack("<Q", chkpData[0xA4:0xAC])[0]
+   
+    if 'image' not in locals():
+        print("Error: Please set the path to your ReFS image file.")
+        return 1
 
-    # Converting pointers to offsets
-    objIdTableOffset = getOffsetFromPtr(objIdTable, vbrOffset, cluster)
-    medAllocTableOffset = getOffsetFromPtr(medAllocTable, vbrOffset, cluster)
-    containerAllocTableOffset = getOffsetFromPtr(containerAllocTable, vbrOffset, cluster)
+    try:
+        with open(image, "rb") as f:  # Open the ReFS image
+            vbrOffset = ReFScan.get_offset(f, "52654653000000")  # Get Volume Boot Record offset
+            vbrData = ReFScan.dump_vbr(f, vbrOffset)             # Dump VBR results
+            cluster = vbrData["bytesPerSector"] * vbrData["sectorsPerCluster"]  # Calculate cluster size
+            
+            # Dump other ReFS structures
+            supbData = ReFScan.dump_supb(f, vbrOffset, cluster)                     # Dump Superblock
+            chkpData = ReFScan.dump_chkp(f, int(supbData["checkpointPtr0"], 16), vbrOffset, cluster)  # First Checkpoint
+            chkpData1 = ReFScan.dump_chkp(f, int(supbData["checkpointPtr1"], 16), vbrOffset, cluster) # Second Checkpoint
+            
+           
+            print("\nFirst Checkpoint Data:\n")
+            for i in chkpData.keys():
+                print(f"{i: <30}: {ReFScan.dump_page_header(f, chkpData[i])}")
 
-    print("Checkpoint Data:")
-    print(f"Object ID Table Pointer: {hex(objIdTable)} (Offset: {hex(objIdTableOffset)})")
-    print(f"Medium Allocator Table Pointer: {hex(medAllocTable)} (Offset: {hex(medAllocTableOffset)})")
-    print(f"Container Allocator Table Pointer: {hex(containerAllocTable)} (Offset: {hex(containerAllocTableOffset)})")
+            print("\nSecond Checkpoint Data:\n")
+            for i in chkpData1.keys():
+                print(f"{i: <30}: {ReFScan.dump_page_header(f, chkpData1[i])}")
+                
+            print("\nProcessing Specific Fields (0x94 - 0xa0):\n")
+            obj_id_table_ref = ReFScan.extract_field(f, vbrOffset + 0x94, 8)
+            container_alloc_table_ref = ReFScan.extract_field(f, vbrOffset + 0x9C, 8)
+            print(f"Object ID Table Reference (0x94): {obj_id_table_ref}")
+            print(f"Container Allocator Table Reference (0x9C): {container_alloc_table_ref}")
 
-    return {
-        "objIdTable": objIdTableOffset,
-        "medAllocTable": medAllocTableOffset,
-        "containerAllocTable": containerAllocTableOffset
-    }
+    except FileNotFoundError:
+        print(f"Error: File '{image}' not found.")
+        return 1
 
-def dump_assigned_tables(f, chkpData, vbrOffset, cluster):
-    # Access the specific tables at the pointers for 0x94 - 0x9C
-    objIdTablePtr = chkpData.get("objIdTable")
-    medAllocTablePtr = chkpData.get("medAllocTable")
-    containerAllocTablePtr = chkpData.get("containerAllocTable")
+    return 0
 
-    # Read and display headers or sample data from these locations
-    print("\n-------- Assigned Tables Dump --------")
-    for name, ptr in [("Object ID Table", objIdTablePtr), 
-                      ("Medium Allocator Table", medAllocTablePtr), 
-                      ("Container Allocator Table", containerAllocTablePtr)]:
-        if ptr != -1:
-            f.seek(ptr)
-            hexdump = f.read(64).hex()  # Read first 64 bytes for preview
-            print(f"{name} at {hex(ptr)}: {hexdump}")
-        else:
-            print(f"{name} pointer not found or invalid.")
-
-def main(file_path):
-    with open(file_path, "rb") as f:
-        # Read VBR to determine cluster size
-        cluster = read_vbr(f)
-
-        # Assuming a VBR offset (often zero for simple cases)
-        vbrOffset = 0x0
-
-        # Dump checkpoint information
-        chkpData = dump_chkp(f, vbrOffset, cluster)
-
-        # Dump assigned table sections
-        dump_assigned_tables(f, chkpData, vbrOffset, cluster)
-
-# Replace 'your_file_path' with the path to your ReFS filesystem image
-main("your_file_path")
+if __name__ == "__main__":
+    main()
