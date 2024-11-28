@@ -150,7 +150,7 @@ def dump_chkp(f, offset, vbrOffset, cluster):
         "minVer": unpack(hexdump[172:176], "<B"),                   # 0x56      2       Filesystem Mini Version
         "chkpVirtualClock": hex(chkpVirtualClock),                  # 0x60      8       Checkpoint Virtual Clock, alternates between either CHKP
         "allocVirtualClock": hex(allocVirtualClock),                # 0x68      8       Allocator Virtual Clock, unsure, but counter seems to alternate between CHKP as well
-        "oldestLogRecordPtr": hex(oldestLogRecordPtr),              # 0x70      8       @zheryee TODO Still trying to figure out, not sure if pointer bc value larger than disk size
+        "oldestLogRecordPtr": hex(oldestLogRecordPtr),              # 0x70      8       Pointer to last log record written
         }
     ptrData={
         "objIdTable": getOffsetFromPtr(0x94),                       # 0x94      4       Pointer to the Object ID Table Reference
