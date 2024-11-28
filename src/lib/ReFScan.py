@@ -140,14 +140,6 @@ def dump_chkp(f, offset, vbrOffset, cluster):
         ptr = int(ptr, 16)
         return ptr
     
-    ptrSchemaTable = unpack(hexdump[320:320+8], "<L")
-    ptrParentChildTable = unpack(hexdump[328:328+8], "<L")
-    ptrObjIdTableDup = unpack(hexdump[336:336+8], "<L")
-
-    ptrcontainerIndexTable = unpack(hexdump[376:376+8], "<L")
-    ptrintegrityStateTable = unpack(hexdump[384:384+8], "<L")
-    ptrsmallAllocTable = unpack(hexdump[392:392+8], "<L")
-
     chkpVirtualClock = unpack(hexdump[192:208], "<Q")
     allocVirtualClock = unpack(hexdump[208:224], "<Q")
     oldestLogRecordPtr = unpack(hexdump[224:240], "<Q")
@@ -156,28 +148,43 @@ def dump_chkp(f, offset, vbrOffset, cluster):
         "pageHeader": dump_page_header(f, offset),                  # 0x00      50      Page Header
         "majVer": unpack(hexdump[168:174], "<B"),                   # 0x54      2       Filesystem Major Version
         "minVer": unpack(hexdump[172:176], "<B"),                   # 0x56      2       Filesystem Mini Version
-        "chkpVirtualClock": hex(chkpVirtualClock),                  # 0x60      8       Clock updated when checkpoint structure is rewritten i.e. 0x69 --> 0x6b
-        "allocVirtualClock": hex(allocVirtualClock),                # 0x68      8       @zheryee TODO Still figuring out what it does
+        "chkpVirtualClock": hex(chkpVirtualClock),                  # 0x60      8       Checkpoint Virtual Clock, alternates between either CHKP
+        "allocVirtualClock": hex(allocVirtualClock),                # 0x68      8       Allocator Virtual Clock, unsure, but counter seems to alternate between CHKP as well
         "oldestLogRecordPtr": hex(oldestLogRecordPtr),              # 0x70      8       @zheryee TODO Still trying to figure out, not sure if pointer bc value larger than disk size
         }
     ptrData={
-        "objIdTable": getOffsetFromPtr(0x94),                       # 0x94      4       @weichen TODO
-        "medAllocTable": getOffsetFromPtr(0x98),                    # 0x98      4       @weichen TODO
-        "containerAllocTable": getOffsetFromPtr(0x9c),              # 0x9c      4       @weichen TODO
-        "schemaTable": getOffsetFromPtr(0xa0),                      # 0xa0      4       @unclehengz TODO
-        "parentChildTable": getOffsetFromPtr(0xa4),                 # 0xa4      4       @unclehengz TODO
-        "objIdTableDup": getOffsetFromPtr(0xa8),                    # 0xa8      4       @unclehengz TODO
-        "blockRefCountTable": getOffsetFromPtr(0xac),               # 0xac      4       @verno TODO
-        "containerTable": getOffsetFromPtr(0xb0),                   # 0xb0      4       @verno TODO
-        "containerTableDup": getOffsetFromPtr(0xb4),                # 0xb4      4       @verno  TODO
-        "schemaTableDup": getOffsetFromPtr(0xb8),                   # 0xb8      4       @verno TODO
-        "containerIndexTable": getOffsetFromPtr(0xbc),              # 0xbc      4       @yqy TODO
-        "integrityStateTable": getOffsetFromPtr(0xc0),              # 0xc0      4       @yqy TODO
-        "smallAllocTable": getOffsetFromPtr(0xc4),                  # 0xc4      4       @yqy TODO
+        "objIdTable": getOffsetFromPtr(0x94),                       # 0x94      4       Pointer to the Object ID Table Reference
+        "medAllocTable": getOffsetFromPtr(0x98),                    # 0x98      4       Pointer to the Medium Allocator Table Reference
+        "containerAllocTable": getOffsetFromPtr(0x9c),              # 0x9c      4       Pointer to the Container Allcator Table Reference
+        "schemaTable": getOffsetFromPtr(0xa0),                      # 0xa0      4       Pointer to the Schema Table Reference
+        "parentChildTable": getOffsetFromPtr(0xa4),                 # 0xa4      4       Pointer to the Parent Child Table Reference
+        "objIdTableDup": getOffsetFromPtr(0xa8),                    # 0xa8      4       Pointer to the Object ID Table Reference
+        "blockRefCountTable": getOffsetFromPtr(0xac),               # 0xac      4       Pointer to the Block Reference Count Table Reference
+        "containerTable": getOffsetFromPtr(0xb0),                   # 0xb0      4       Pointer to the Container Table Reference
+        "containerTableDup": getOffsetFromPtr(0xb4),                # 0xb4      4       Pointer to the Container Table Duplicate Reference 
+        "schemaTableDup": getOffsetFromPtr(0xb8),                   # 0xb8      4       Pointer to the Schema Table Duplicate Reference
+        "containerIndexTable": getOffsetFromPtr(0xbc),              # 0xbc      4       Pointer to the Container Index Table Reference
+        "integrityStateTable": getOffsetFromPtr(0xc0),              # 0xc0      4       Pointer to the Integrity State Table Reference
+        "smallAllocTable": getOffsetFromPtr(0xc4),                  # 0xc4      4       Pointer to the Small Allocator Table Reference
     }
     print("\n-------------------Checkpoint-------------------")
     for x,y in data.items():
         print(f"{x : <30}: {y}")
     for x,y in ptrData.items():
-        print(f"{x : <30}: {y}")
+        print(f"{x : <30}: {hex(y)}")
     return ptrData
+
+def dump_schema_table(f, offset):
+    f.seek(offset)
+    hexdump = f.read(4096).hex()
+
+    data = {
+        "pageHeader": dump_page_header(f, offset),
+        "schemaID": hexdump[160:168],
+        "schemaSize": hexdump[176:184],
+    }
+    
+    print("\n-------------------Schema Table-------------------")
+    for x,y in data.items():
+        print(f"{x : <30}: {y}")
+    return
