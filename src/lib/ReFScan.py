@@ -176,8 +176,9 @@ def dump_chkp(f, offset, vbrOffset, cluster):
 
 def dump_container_table(f, offset):
     rootData, headerData = dump_node_info(f, offset)
-    f.seek(offset)
+    f.seek(offset+0x50+rootData["size"])
     hexdump = f.read(4096).hex()
+    
     data = {
         "rootData": rootData,
         "headerData": headerData,
@@ -187,7 +188,8 @@ def dump_container_table(f, offset):
     for x,y in rootData.items():
         print(f"{x}: {y}")
     for x,y in headerData.items():
-        print(f"{x}: {y}")
+        print(f"{x}: {hex(y)}")
+    print(hexdump)
     return
 
 def dump_schema_table(f, offset):
