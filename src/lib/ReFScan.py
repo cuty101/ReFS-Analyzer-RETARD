@@ -107,7 +107,7 @@ def dump_supb(f, offset, cluster):
         hexdump = f.read(4096).hex()
     pageHeader = dump_page_header(f, cursor)
     data={                                                                      # Offset    Length  Description
-        "pageHeader": pageHeader,                                               # 0x00      50      Page Header
+        "pageHeader": pageHeader,                                               # 0x00      80      Page Header
         "guidResult":compute_guid(hexdump[160:192], pageHeader['vol_sig']),     # 0x50      16      GUID (Used to compute volume signature)
         "superblockVersion": unpack(hexdump[208:224],"<Q"),                     # 0x68      8       Superblock version (Used to determine recency)
     }
@@ -145,7 +145,7 @@ def dump_chkp(f, offset, vbrOffset, cluster):
     oldestLogRecordPtr = unpack(hexdump[224:240], "<Q")
 
     data = {                                                        # Offset    Length  Description
-        "pageHeader": dump_page_header(f, offset),                  # 0x00      50      Page Header
+        "pageHeader": dump_page_header(f, offset),                  # 0x00      80      Page Header
         "majVer": unpack(hexdump[168:174], "<B"),                   # 0x54      2       Filesystem Major Version
         "minVer": unpack(hexdump[172:176], "<B"),                   # 0x56      2       Filesystem Mini Version
         "chkpVirtualClock": hex(chkpVirtualClock),                  # 0x60      8       Checkpoint Virtual Clock, alternates between either CHKP
@@ -173,6 +173,31 @@ def dump_chkp(f, offset, vbrOffset, cluster):
     for x,y in ptrData.items():
         print(f"{x : <30}: {hex(y)}")
     return ptrData
+
+def dump_container_table(f, offset):
+    f.seek(offset)
+    hexdump = f.read(4096).hex()
+    data={                                                      # Offset    Length  Description
+        "pageHeader": dump_page_header(f, offset),              # 0x00      80      Page Header
+        "size": unpack(hexdump[160:168], "<L"),                 # 0x50      4       Size
+        "sizeOfFixedComponent": unpack(hexdump[168:172], "<B"), # 0x54      2       Size of the fixed component of the index root (should be 0x28)
+        "tableSchema": unpack(hexdump[184:192],"<L"),           # 0x5C      4       Schema of the Table
+        "extents": unpack(hexdump[208:224], "<Q"),              # 0x68      8       Number of extents in the table
+        "rows": unpack(hexdump[224:240], "<Q"),
+    }
+    
+    
+    
+    print(f"\n-------------------Container Table-------------------\n"
+          f"pageHeader: {data['pageHeader']}\n"
+          f"Size: {data['size']}\n"
+          f"Size of Fixed component of the index root: {data['sizeOfFixedComponent']}\n"
+          f"Schema: {hex(data['tableSchema'])}\n"
+          f"No of Extents: {data['extents']}\n"
+          f"No of Rows: {data['rows']}\n"
+          )
+    # print(hexdump[0x50*2:0x60*2])
+    return data
 
 def dump_schema_table(f, offset):
     f.seek(offset)
