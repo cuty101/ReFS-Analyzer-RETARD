@@ -226,18 +226,17 @@ def dump_rows(f, offset, rootData, headerData):
         keyIndex = unpack(hexdump[x:x+8], "<L") & 0x0000ffff
         keyOffset = keyIndex+offset
         keyOffsetList.append(keyOffset)
-    print(keyOffsetList)
 
-    print("Offset\t\tIndexLen\tKey\tKeyLen\tFlags\tValue\tValueLen")
-    for key in keyOffsetList:
-        f.seek(key)
-        hexdump = f.read(4096).hex() # +4 to get len of next index
-        print(f"{hex(key)}\t"
-              f"{hex(unpack(hexdump[0:8], "<L"))}\t\t"
-              f"{hex(unpack(hexdump[8:12], "<B"))}\t"
-              f"{hex(unpack(hexdump[12:16],"<B"))}\t"
-              f"{hex(unpack(hexdump[16:20], "<B"))}\t"
-              f"{hex(unpack(hexdump[20:24], "<B"))}\t"
-              f"{hex(unpack(hexdump[24:28], "<B"))}"
-              )
-    return
+    # print("Offset\t\tIndexLen\tKey\tKeyLen\tFlags\tValue\tValueLen")
+    # for key in keyOffsetList:
+    #     f.seek(key)
+    #     hexdump = f.read(4096).hex() # +4 to get len of next index
+    #     print(f"{hex(key)}\t"
+    #           f"{hex(unpack(hexdump[0:8], "<L"))}\t\t"
+    #           f"{hex(unpack(hexdump[8:12], "<B"))}\t"
+    #           f"{hex(unpack(hexdump[12:16],"<B"))}\t"
+    #           f"{hex(unpack(hexdump[16:20], "<B"))}\t"
+    #           f"{hex(unpack(hexdump[20:24], "<B"))}\t"
+    #           f"{hex(unpack(hexdump[24:28], "<B"))}"
+    #           )
+    return keyOffsetList

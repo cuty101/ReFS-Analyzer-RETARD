@@ -65,9 +65,9 @@ def main():
             
             # schemaTable = ReFScan.dump_schema_table(f, chkpData["schemaTable"])
             
-            # print("\n\n")
-            # for i in ptrData.keys():
-            #     print(f"{i: <30}: {ReFScan.dump_page_header(f, ptrData[i])}")
+            print("\n\n")
+            for i in ptrData.keys():
+                print(f"{i: <30}: {ReFScan.dump_page_header(f, ptrData[i])}")
             # print("\n\n")
             # for i in chkpData1.keys():
             #     print(f"{i: <30}: {ReFScan.dump_page_header(f, chkpData1[i])}")
