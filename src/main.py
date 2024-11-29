@@ -2,6 +2,7 @@
 import lib.ReFScan as ReFScan
 import lib.dump as dump
 import argparse
+import traceback
 
 def main():
     # Argument Parser
@@ -49,7 +50,7 @@ def main():
             chkpData, ptrData = ReFScan.dump_chkp(f, int(supbData["checkpointPtr0"],16), vbrOffset, cluster)        # Checkpoint
             chkpData1, ptrData1 = ReFScan.dump_chkp(f, int(supbData["checkpointPtr1"],16), vbrOffset, cluster)      # 2nd Checkpoint
             containerTable = ReFScan.dump_container_table(f, ptrData["containerTable"])
-            smallAllocTable = ReFScan.dump_container_table(f, ptrData["smallAllocTable"])
+            # smallAllocTable = ReFScan.dump_container_table(f, ptrData["smallAllocTable"])
 
             if args.vbr:
                 dump.print_vbr(vbrData, vbrOffset)                                                               # Dump results
@@ -59,14 +60,14 @@ def main():
                 print("-----------------Checkpoint 0-----------------\n")
                 dump.print_chkp(chkpData, ptrData)                                                               # Dump Checkpoint
                 print("-----------------Checkpoint 1-----------------\n")
-                dump.print_chkp(chkpData1, ptrData1)                                                             # Dump Checkpoint 1
+                # dump.print_chkp(chkpData1, ptrData1)                                                             # Dump Checkpoint 1
 
             
             # schemaTable = ReFScan.dump_schema_table(f, chkpData["schemaTable"])
             
             # print("\n\n")
-            # for i in chkpData.keys():
-            #     print(f"{i: <30}: {ReFScan.dump_page_header(f, chkpData[i])}")
+            # for i in ptrData.keys():
+            #     print(f"{i: <30}: {ReFScan.dump_page_header(f, ptrData[i])}")
             # print("\n\n")
             # for i in chkpData1.keys():
             #     print(f"{i: <30}: {ReFScan.dump_page_header(f, chkpData1[i])}")
@@ -74,7 +75,7 @@ def main():
     except FileNotFoundError:
         print(f"Error: The file '{image}' was not found.")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"An error occurred: {traceback.format_exc()}")
 
 if __name__ == "__main__":
     main()

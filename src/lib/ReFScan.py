@@ -216,7 +216,6 @@ def dump_node_info(f, offset):
 def dump_rows(f, offset, rootData, headerData):
     f.seek(offset)
     hexdump=f.read(4096).hex()
-    lenOfEntry=unpack(hexdump[0x28*2:0x28*2+8], "<L") # Get size of first entry to optimize f.read()
     keyIndexOffset = offset+headerData["startKey"]
     f.seek(keyIndexOffset)
     hexdump = f.read(4096).hex()
@@ -227,18 +226,18 @@ def dump_rows(f, offset, rootData, headerData):
         keyIndex = unpack(hexdump[x:x+8], "<L") & 0x0000ffff
         keyOffset = keyIndex+offset
         keyOffsetList.append(keyOffset)
+    print(keyOffsetList)
 
     print("Offset\t\tIndexLen\tKey\tKeyLen\tFlags\tValue\tValueLen")
     for key in keyOffsetList:
         f.seek(key)
-        hexdump = f.read(lenOfEntry+5).hex() # +4 to get len of next index
+        hexdump = f.read(4096).hex() # +4 to get len of next index
         print(f"{hex(key)}\t"
-              f"{hex(lenOfEntry)}\t\t"
+              f"{hex(unpack(hexdump[0:8], "<L"))}\t\t"
               f"{hex(unpack(hexdump[8:12], "<B"))}\t"
               f"{hex(unpack(hexdump[12:16],"<B"))}\t"
               f"{hex(unpack(hexdump[16:20], "<B"))}\t"
               f"{hex(unpack(hexdump[20:24], "<B"))}\t"
               f"{hex(unpack(hexdump[24:28], "<B"))}"
               )
-        lenOfEntry = unpack(hexdump[-10:-2], "<L")
     return
