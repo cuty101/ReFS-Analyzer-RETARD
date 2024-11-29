@@ -76,7 +76,10 @@ def dump_vbr(f, offset):
         "bytesPerContainer": unpack(fData[128:128+16], "<Q")
     }
     data['totalVol']=data['sectors']*data['bytesPerSector']/(1024**3)
-    print(
+    return data
+
+def print_vbr(data, offset):
+        print(
         "---------------Volume Information---------------\n"
         f"Offset: {hex(offset)}\n"
         f"Sector: {offset/data['bytesPerSector']:.0f}\n"
@@ -90,7 +93,6 @@ def dump_vbr(f, offset):
         f"Bytes per Container: {data['bytesPerContainer']}\n"
         # f"VBR Backup: Offset {hex(offset+sectors*bytesPerSector-bytesPerSector)}"
     )
-    return data
 
 # Superblock Retrieval
 # In cluster 30 of ReFS filesystem
@@ -116,9 +118,14 @@ def dump_supb(f, offset, cluster):
     data['checkpointPtr0'] = hex(checkpointPtr0*cluster+offset)
     checkpointPtr1 = unpack(hexdump[checkpointPtr+16:checkpointPtr+32],"<Q")    # 0x08      8       0x08 from offset pointed by 2nd value pointed by 0x70
     data['checkpointPtr1'] = hex(checkpointPtr1*cluster+offset)
-    print(
+    data['offset'] = hex(cursor)
+
+    return data
+    
+def print_supb(data):
+        print(
         "-------------------Superblock-------------------\n"
-        f"Offset: {hex(cursor)}\n"
+        f"Offset: {data['offset']}\n"
         f"Volume Signature: {data['pageHeader']['vol_sig']:08X}\n"
         f"Logical Cluster Number: {data['pageHeader']['lcn0']}\n"
         f"Table Identifier: {data['pageHeader']['tableIdHigh']:08X}{data['pageHeader']['tableIdLow']:08X}\n"
@@ -127,8 +134,7 @@ def dump_supb(f, offset, cluster):
         f"Superblock Version: {data['superblockVersion']}\n"
         f"Checkpoint offsets: {data['checkpointPtr0']}, {data['checkpointPtr1']}"
         )
-    return data
-    
+
 def dump_chkp(f, offset, vbrOffset, cluster):
     f.seek(offset)
     hexdump = f.read(4096).hex()
