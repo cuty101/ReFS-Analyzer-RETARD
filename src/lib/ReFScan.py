@@ -175,43 +175,19 @@ def dump_chkp(f, offset, vbrOffset, cluster):
     return ptrData
 
 def dump_container_table(f, offset):
+    rootData, headerData = dump_node_info(f, offset)
     f.seek(offset)
     hexdump = f.read(4096).hex()
-    rootData={                                                  # Offset    Length  Description
-        "pageHeader": dump_page_header(f, offset),              # 0x00      80      Page Header
-        "size": unpack(hexdump[160:168], "<L"),                 # 0x50      4       Size
-        "sizeOfFixedComponent": unpack(hexdump[168:172], "<B"), # 0x54      2       Size of the fixed component of the index root (should be 0x28)
-        "tableSchema": unpack(hexdump[184:192],"<L"),           # 0x5C      4       Schema of the Table
-        "extents": unpack(hexdump[208:224], "<Q"),              # 0x68      8       Number of extents in the table
-        "rows": unpack(hexdump[224:240], "<Q"),                 # 0x70      8       Number of rows in the table
+    data = {
+        "rootData": rootData,
+        "headerData": headerData,
     }
     
-    startHeader = rootData["size"]+0x50
-    f.seek(startHeader+offset)
-    hexdump = f.read(4096).hex()
-    headerData={                                                # Offset    Length  Description
-        "startData": unpack(hexdump[0:8], "<L"),                # 0x00      4       Offset to the start of the data area
-        "endData": unpack(hexdump[8:16], "<L"),                 # 0x04      4       Offset of the end of the data area
-        "freeBytes": unpack(hexdump[16:24], "<L"),              # 0x08      4       Free bytes in the node
-        "height": unpack(hexdump[24:26], "<B"),                 # 0x0c      1       Height of node
-        "flag": unpack(hexdump[26:28], "<B"),                   # 0x0d      1       Flag
-    }
-    
-    
-    print(f"\n-------------------Container Table-------------------\n"
-          f"pageHeader: {rootData['pageHeader']}\n"
-          f"Size: {rootData['size']}\n"
-          f"Size of Fixed component of the index root: {rootData['sizeOfFixedComponent']}\n"
-          f"Schema: {hex(rootData['tableSchema'])}\n"
-          f"No of Extents: {rootData['extents']}\n"
-          f"No of Rows: {rootData['rows']}\n"
-          f"Offset to Start of Data Area: {headerData['startData']}\n"
-          f"Offset to End of Data Area: {headerData['endData']}\n"
-          f"Free Bytes in node: {headerData['freeBytes']}\n"
-          f"Height of node: {headerData['height']}\n"
-          f"Flags: {headerData['flag']}\n"
-          )
-    # print(hexdump[0x50*2:0x60*2])
+    print(f"\n-------------------Container Table-------------------\n")
+    for x,y in rootData.items():
+        print(f"{x}: {y}")
+    for x,y in headerData.items():
+        print(f"{x}: {y}")
     return
 
 def dump_schema_table(f, offset):
@@ -234,24 +210,33 @@ def dump_schema_table(f, offset):
 def dump_node_info(f, offset):
     f.seek(offset)
     hexdump = f.read(4096).hex()
-    rootData = {                                                        # Offset    Length  Description
-        "pageHeader": dump_page_header(f, offset),                       # 0x00      80      Page Header
-        "size": unpack(hexdump[160:168], "<L"),                     # 0x50      4       Size
-        "sizeOfFixedComponent": unpack(hexdump[168:172], "<B"),     # 0x54      2       Size of the fixed component of the index root (should be 0x28)
-        "tableSchema": unpack(hexdump[184:192], "<L"),              # 0x5C      4       Schema of the Table
-        "extents": unpack(hexdump[208:224], "<Q"),                  # 0x68      8       Number of extents in the table
-        "rows": unpack(hexdump[224:240], "<Q"),                     # 0x70      8       Number of rows in the table
-    }
+    if hexdump[160:168] == "08000000":
+        rootData={
+            "pageHeader": dump_page_header(f, offset),
+            "size": unpack(hexdump[160:168], "<L"),                 # Non root nodes will have size of 8
+        }
+    else:
+        rootData = {                                                # Offset    Length  Description
+            "pageHeader": dump_page_header(f, offset),              # 0x00      80      Page Header
+            "size": unpack(hexdump[160:168], "<L"),                 # 0x50      4       Size
+            "sizeOfFixedComponent": unpack(hexdump[168:172], "<B"), # 0x54      2       Size of the fixed component of the index root (should be 0x28)
+            "tableSchema": unpack(hexdump[184:192], "<L"),          # 0x5C      4       Schema of the Table
+            "extents": unpack(hexdump[208:224], "<Q"),              # 0x68      8       Number of extents in the table
+            "rows": unpack(hexdump[224:240], "<Q"),                 # 0x70      8       Number of rows in the table
+        }
 
     startHeader = rootData["size"] + 0x50
     f.seek(startHeader + offset)
     hexdump = f.read(4096).hex()
-    headerData = {  # Offset    Length  Description
+    headerData = {                                                  # Offset    Length  Description
         "startData": unpack(hexdump[0:8], "<L"),                    # 0x00      4       Offset to the start of the data area
         "endData": unpack(hexdump[8:16], "<L"),                     # 0x04      4       Offset of the end of the data area
         "freeBytes": unpack(hexdump[16:24], "<L"),                  # 0x08      4       Free bytes in the node
         "height": unpack(hexdump[24:26], "<B"),                     # 0x0c      1       Height of node
         "flag": unpack(hexdump[26:28], "<B"),                       # 0x0d      1       Flag
+        "startKey": unpack(hexdump[32:40], "<L"),                   # 0x10      4       Start of the key index
+        "keyEntriesCount": unpack(hexdump[40:48], "<L"),            # 0x14      4       Number of entries in the key index
+        "endKey": unpack(hexdump[64:72], "<L"),                     # 0x20      4       End of the key index
     }
 
     return rootData, headerData

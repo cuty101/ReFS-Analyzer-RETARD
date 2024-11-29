@@ -15,7 +15,6 @@ def main():
     args = parser.parse_args()
 
     image = args.image
-
     try:
         with open(image, "rb") as f:
 
@@ -26,6 +25,7 @@ def main():
             chkpData = ReFScan.dump_chkp(f, int(supbData["checkpointPtr0"],16), vbrOffset, cluster)     # Checkpoint
             chkpData1 = ReFScan.dump_chkp(f, int(supbData["checkpointPtr1"],16), vbrOffset, cluster)    # 2nd Checkpoint
             containerTable = ReFScan.dump_container_table(f, chkpData["containerTable"])
+            smallAllocTable = ReFScan.dump_container_table(f, chkpData["smallAllocTable"])
             # schemaTable = ReFScan.dump_schema_table(f, chkpData["schemaTable"])
             
             # print("\n\n")
