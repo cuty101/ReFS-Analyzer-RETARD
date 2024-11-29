@@ -48,7 +48,9 @@ def main():
             supbData = ReFScan.dump_supb(f, vbrOffset, cluster)                                                     # Superblock Data
             chkpData, ptrData = ReFScan.dump_chkp(f, int(supbData["checkpointPtr0"],16), vbrOffset, cluster)        # Checkpoint
             chkpData1, ptrData1 = ReFScan.dump_chkp(f, int(supbData["checkpointPtr1"],16), vbrOffset, cluster)      # 2nd Checkpoint
-            
+            containerTable = ReFScan.dump_container_table(f, ptrData["containerTable"])
+            smallAllocTable = ReFScan.dump_container_table(f, ptrData["smallAllocTable"])
+
             if args.vbr:
                 dump.print_vbr(vbrData, vbrOffset)                                                               # Dump results
             if args.supb:
@@ -59,8 +61,7 @@ def main():
                 print("-----------------Checkpoint 1-----------------\n")
                 dump.print_chkp(chkpData1, ptrData1)                                                             # Dump Checkpoint 1
 
-            # containerTable = ReFScan.dump_container_table(f, chkpData["containerTable"])
-            # smallAllocTable = ReFScan.dump_container_table(f, chkpData["smallAllocTable"])
+            
             # schemaTable = ReFScan.dump_schema_table(f, chkpData["schemaTable"])
             
             # print("\n\n")
