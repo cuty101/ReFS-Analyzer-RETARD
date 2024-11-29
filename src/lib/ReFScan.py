@@ -78,22 +78,6 @@ def dump_vbr(f, offset):
     data['totalVol']=data['sectors']*data['bytesPerSector']/(1024**3)
     return data
 
-def print_vbr(data, offset):
-        print(
-        "---------------Volume Information---------------\n"
-        f"Offset: {hex(offset)}\n"
-        f"Sector: {offset/data['bytesPerSector']:.0f}\n"
-        f"Filesystem: {bytearray.fromhex(data['fs']).decode()}\n"
-        f"Number of Sectors: {data['sectors']}\n"
-        f"Bytes per Sector: {data['bytesPerSector']} Bytes\n"
-        f"Sectors per Cluster: {data['sectorsPerCluster']}\n"
-        f"Total space: {data['totalVol']} GB\n"
-        f"ReFS Version: {data['majVer']}.{data['minVer']}\n"
-        f"Volume Serial Number: {data['volSerialNum']:X}\n"
-        f"Bytes per Container: {data['bytesPerContainer']}\n"
-        # f"VBR Backup: Offset {hex(offset+sectors*bytesPerSector-bytesPerSector)}"
-    )
-
 # Superblock Retrieval
 # In cluster 30 of ReFS filesystem
 def dump_supb(f, offset, cluster):
@@ -121,19 +105,6 @@ def dump_supb(f, offset, cluster):
     data['offset'] = hex(cursor)
 
     return data
-    
-def print_supb(data):
-        print(
-        "-------------------Superblock-------------------\n"
-        f"Offset: {data['offset']}\n"
-        f"Volume Signature: {data['pageHeader']['vol_sig']:08X}\n"
-        f"Logical Cluster Number: {data['pageHeader']['lcn0']}\n"
-        f"Table Identifier: {data['pageHeader']['tableIdHigh']:08X}{data['pageHeader']['tableIdLow']:08X}\n"
-        f"GUID: {data['guidResult']['guid3']:04X}{data['guidResult']['guid2']:04X}{data['guidResult']['guid1']:04X}{data['guidResult']['guid0']:04X}\n"
-        f"Page status: {data['guidResult']['message']}\n"
-        f"Superblock Version: {data['superblockVersion']}\n"
-        f"Checkpoint offsets: {data['checkpointPtr0']}, {data['checkpointPtr1']}"
-        )
 
 def dump_chkp(f, offset, vbrOffset, cluster):
     f.seek(offset)
@@ -173,12 +144,7 @@ def dump_chkp(f, offset, vbrOffset, cluster):
         "integrityStateTable": getOffsetFromPtr(0xc0),              # 0xc0      4       Pointer to the Integrity State Table Reference
         "smallAllocTable": getOffsetFromPtr(0xc4),                  # 0xc4      4       Pointer to the Small Allocator Table Reference
     }
-    print("\n-------------------Checkpoint-------------------")
-    for x,y in data.items():
-        print(f"{x : <30}: {y}")
-    for x,y in ptrData.items():
-        print(f"{x : <30}: {hex(y)}")
-    return ptrData
+    return data, ptrData
 
 def dump_container_table(f, offset):
     rootData, headerData = dump_node_info(f, offset)

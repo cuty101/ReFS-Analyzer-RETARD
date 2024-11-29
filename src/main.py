@@ -1,7 +1,6 @@
-import os, struct
-
 # Local Import
 import lib.ReFScan as ReFScan
+import lib.dump as dump
 import argparse
 
 def main():
@@ -22,9 +21,15 @@ def main():
         action="store_true",
         help="Dump the Superblock (SUPB)",
     )
+    parser.add_argument(
+        "-c", "--chkp",
+        action="store_true",
+        help="Dump the Checkpoint (CHKP)",
+    )
+
     args = parser.parse_args()
 
-    action = [args.vbr, args.supb]
+    action = [args.vbr, args.supb, args.chkp]
 
     if not any(action):
         print("\nError: No action specified. Use -h or --help for help.\n")
@@ -37,21 +42,26 @@ def main():
             print (f"Analysing image: {image}")
 
             # Get Volume Boot Record
-            vbrOffset = ReFScan.get_offset(f, "52654653000000")                                         # Get Volume Boot Record (VBR) Offset
-            vbrData = ReFScan.dump_vbr(f, vbrOffset)                                                    # VBR Data
-            cluster = vbrData["bytesPerSector"] * vbrData["sectorsPerCluster"]                          # Cluster Size
-            supbData = ReFScan.dump_supb(f, vbrOffset, cluster)                                         # Superblock Data
+            vbrOffset = ReFScan.get_offset(f, "52654653000000")                                                     # Get Volume Boot Record (VBR) Offset
+            vbrData = ReFScan.dump_vbr(f, vbrOffset)                                                                # VBR Data
+            cluster = vbrData["bytesPerSector"] * vbrData["sectorsPerCluster"]                                      # Cluster Size
+            supbData = ReFScan.dump_supb(f, vbrOffset, cluster)                                                     # Superblock Data
+            chkpData, ptrData = ReFScan.dump_chkp(f, int(supbData["checkpointPtr0"],16), vbrOffset, cluster)        # Checkpoint
+            chkpData1, ptrData1 = ReFScan.dump_chkp(f, int(supbData["checkpointPtr1"],16), vbrOffset, cluster)      # 2nd Checkpoint
             
             if args.vbr:
-                ReFScan.print_vbr(vbrData, vbrOffset)                                                   # Dump results
+                dump.print_vbr(vbrData, vbrOffset)                                                               # Dump results
             if args.supb:
-                ReFScan.print_supb(supbData)                                                            # Dump Superblock
-            
-            # chkpData = ReFScan.dump_chkp(f, int(supbData["checkpointPtr0"],16), vbrOffset, cluster)     # Checkpoint
-            # chkpData1 = ReFScan.dump_chkp(f, int(supbData["checkpointPtr1"],16), vbrOffset, cluster)    # 2nd Checkpoint
+                dump.print_supb(supbData)                                                                        # Dump Superblock
+            if args.chkp:
+                print("-----------------Checkpoint 0-----------------\n")
+                dump.print_chkp(chkpData, ptrData)                                                               # Dump Checkpoint
+                print("-----------------Checkpoint 1-----------------\n")
+                dump.print_chkp(chkpData1, ptrData1)                                                             # Dump Checkpoint 1
+
             # containerTable = ReFScan.dump_container_table(f, chkpData["containerTable"])
             # smallAllocTable = ReFScan.dump_container_table(f, chkpData["smallAllocTable"])
-            # # schemaTable = ReFScan.dump_schema_table(f, chkpData["schemaTable"])
+            # schemaTable = ReFScan.dump_schema_table(f, chkpData["schemaTable"])
             
             # print("\n\n")
             # for i in chkpData.keys():
