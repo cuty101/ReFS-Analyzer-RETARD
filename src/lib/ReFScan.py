@@ -234,4 +234,27 @@ def dump_rows(f, offset, rootData, headerData):
     #           f"{hex(unpack(hexdump[20:24], "<B"))}\t"
     #           f"{hex(unpack(hexdump[24:28], "<B"))}"
     #           )
+    for key in keyOffsetList:
+        f.seek(key)
+        hexdump = f.read(4096).hex()  # +4 to get len of next index
+        keyValueData = dump_key_value_data(hexdump)
+        print("Offset\t\t\tKey")
+        print(f"{hex(key)}\t\t"
+              f"{hex(keyValueData['entryKey'])}\t"
+              )
+        print("Value")
+        print(f"{hex(keyValueData['entryData'])}\n")
+
     return keyOffsetList
+
+def dump_key_value_data(hexdump):
+    offsetKey = unpack(hexdump[8:12], "<B") * 2
+    keyLen = unpack(hexdump[12:16], "<B") * 2
+    offsetValue = unpack(hexdump[20:24], "<B") * 2
+    valueLen = unpack(hexdump[24:28], "<B") * 2
+    keyValueData = {
+        "entryKey": int(hexdump[offsetKey:offsetValue + keyLen], 16),
+        "entryData": int(hexdump[offsetValue:offsetValue + valueLen], 16),
+    }
+
+    return keyValueData
