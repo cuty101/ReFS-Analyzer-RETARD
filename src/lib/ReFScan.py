@@ -1,5 +1,4 @@
 import struct
-import json
 
 # Function to convert a string to little endian
 def unpack(s, type):
@@ -43,8 +42,6 @@ def dump_page_header(f, cursor):
     lcn1 = struct.pack("<Q", int(hexdump[80:96],16))
     lcn2 = struct.pack("<Q",int(hexdump[96:112],16))
     lcn3 = struct.pack("<Q",int(hexdump[112:128],16))
-    lcn = lcn3+lcn2+lcn1+lcn0
-    # data['lcn']=int.from_bytes(lcn, byteorder='big')
     return data
 
 # vol_sig = g1 xor g2 xor g3 xor g4 (used in pages)
@@ -111,14 +108,7 @@ def dump_chkp(f, offset, vbrOffset, cluster):
     f.seek(offset)
     hexdump = f.read(4096).hex()
 
-    # def getContainerRows(containerPtr):
-    #     rootData, headerData = dump_node_info(f, containerPtr)
-    #     keyOffsetList, containerRows = dump_rows(f, containerPtr, rootData, headerData)
-    #     return keyOffsetList, containerRows
-
-    
     def getOffsetFromPtr(ptrOffset, containerTableRows):
-        print(cluster, offset)
         ptrOffset*=2
         ptr = unpack(hexdump[ptrOffset:ptrOffset+8], "<L")*2
         ptr = unpack(hexdump[ptr:ptr+4],"<H")
@@ -209,48 +199,17 @@ def dump_rows(f, offset, headerData):
     hexdump = f.read(4096).hex()
     keyCount = headerData['keyEntriesCount']
     keyOffsetList = []
-    # containerRows = {}
     for i in range(keyCount):
         x = i*8
         keyIndex = unpack(hexdump[x:x+8], '<L') & 0x0000ffff
         keyOffset = keyIndex+offset
         keyOffsetList.append(keyOffset)
 
-    # print("Offset\t\tIndexLen\tKey\tKeyLen\tFlags\tValue\tValueLen")
-    # for key in keyOffsetList:
-    #     f.seek(key)
-    #     hexdump = f.read(4096).hex() # +4 to get len of next index
-    #     print(f"{hex(key)}\t"
-    #           f"{hex(unpack(hexdump[0:8], '<L'))}\t\t"
-    #           f"{hex(unpack(hexdump[8:12], '<B'))}\t"
-    #           f"{hex(unpack(hexdump[12:16],'<B'))}\t"
-    #           f"{hex(unpack(hexdump[16:20], '<B'))}\t"
-    #           f"{hex(unpack(hexdump[20:24], '<B'))}\t"
-    #           f"{hex(unpack(hexdump[24:28], '<B'))}"
-    #           )
-    # for key in keyOffsetList:
-    #     f.seek(key)
-    #     hexdump = f.read(4096).hex()  # +4 to get len of next index
-    #     keyValueData = dump_container_key_pair(hexdump)
-    #     containerRows[hex(keyValueData['bandID'])] = {
-    #         "LCN": hex(keyValueData['Container LCN']),
-    #         "Number of Clusters": hex(keyValueData['noOfClusters'])
-    #     }
-    # 
-    return keyOffsetList #, containerRows
-
-# def dump_container_key_pair(hexdump):
-#     keyValueData = {
-#         "bandID": unpack(hexdump[32:32 + 8], "<L"),
-#         "Container LCN": unpack(hexdump[448:464], "<Q"),
-#         "noOfClusters": unpack(hexdump[464:480], "<Q"),
-#     }
-
-#     return keyValueData
+    return keyOffsetList
 
 def dump_container_table(f, offset):
     rootData, headerData = dump_node_info(f, offset)
-    offset = offset+0x50+rootData["size"] # startOfNode + pageHeader + indexRoot = StartOfIndexHeader
+    offset = offset+0x50+rootData["size"]               # startOfNode + pageHeader + indexRoot = StartOfIndexHeader
     keyOffsetList = dump_rows(f, offset, headerData)
     data = {
         "pageHeader": dump_page_header(f, offset),

@@ -54,7 +54,6 @@ def main():
             chkpData, ptrData = ReFScan.dump_chkp(f, int(supbData["checkpointPtr0"],16), vbrOffset, cluster)        # Checkpoint
             chkpData1, ptrData1 = ReFScan.dump_chkp(f, int(supbData["checkpointPtr1"],16), vbrOffset, cluster)      # 2nd Checkpoint
             containerTable, containerTableRows = ReFScan.dump_container_table(f, ptrData["containerTable"])                             # Container Table
-            # smallAllocTable = ReFScan.dump_container_table(f, ptrData["smallAllocTable"])
 
             if args.vbr:
                 dump.print_vbr(vbrData, vbrOffset)                                                               # Dump results
@@ -71,9 +70,9 @@ def main():
             
             # schemaTable = ReFScan.dump_schema_table(f, chkpData["schemaTable"])
             
-            print("\n\n")
-            for i in ptrData.keys():
-                print(f"{i: <30}: {ReFScan.dump_page_header(f, ptrData[i])}")
+            # print("\n\n")
+            # for i in ptrData.keys():
+            #     print(f"{i: <30}: {ReFScan.dump_page_header(f, ptrData[i])}")
             # print("\n\n")
             # for i in chkpData1.keys():
             #     print(f"{i: <30}: {ReFScan.dump_page_header(f, chkpData1[i])}")
