@@ -117,6 +117,8 @@ def dump_chkp(f, offset, vbrOffset, cluster):
         remainder = int(hex(ptr%(containerSize)),16)
         if vcn == 0:
             return remainder*cluster+vbrOffset
+        if vcn == 1:
+            return vcn*cluster+vbrOffset
         else:
             return (containerTableRows[str(vcn)]["containerLCN"]+remainder)*cluster+vbrOffset
 
