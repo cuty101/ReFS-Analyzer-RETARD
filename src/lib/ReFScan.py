@@ -156,12 +156,7 @@ def dump_container_table(f, offset):
         "headerData": headerData,
     }
     
-    print(f"\n-------------------Container Table-------------------\n")
-    for x,y in rootData.items():
-        print(f"{x}: {y}")
-    for x,y in headerData.items():
-        print(f"{x}: {hex(y)}")
-    return
+    return data
 
 def dump_schema_table(f, offset):
     f.seek(offset)

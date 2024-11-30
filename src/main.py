@@ -27,10 +27,15 @@ def main():
         action="store_true",
         help="Dump the Checkpoint (CHKP)",
     )
+    parser.add_argument(
+        "-ct", "--containerTable",
+        action="store_true",
+        help="Dump the Container Table",
+    )
 
     args = parser.parse_args()
 
-    action = [args.vbr, args.supb, args.chkp]
+    action = [args.vbr, args.supb, args.chkp, args.containerTable]
 
     if not any(action):
         print("\nError: No action specified. Use -h or --help for help.\n")
@@ -49,7 +54,7 @@ def main():
             supbData = ReFScan.dump_supb(f, vbrOffset, cluster)                                                     # Superblock Data
             chkpData, ptrData = ReFScan.dump_chkp(f, int(supbData["checkpointPtr0"],16), vbrOffset, cluster)        # Checkpoint
             chkpData1, ptrData1 = ReFScan.dump_chkp(f, int(supbData["checkpointPtr1"],16), vbrOffset, cluster)      # 2nd Checkpoint
-            containerTable = ReFScan.dump_container_table(f, ptrData["containerTable"])
+            containerTable = ReFScan.dump_container_table(f, ptrData["containerTable"])                             # Container Table
             # smallAllocTable = ReFScan.dump_container_table(f, ptrData["smallAllocTable"])
 
             if args.vbr:
@@ -61,6 +66,8 @@ def main():
                 dump.print_chkp(chkpData, ptrData)                                                               # Dump Checkpoint
                 print("-----------------Checkpoint 1-----------------\n")
                 # dump.print_chkp(chkpData1, ptrData1)                                                             # Dump Checkpoint 1
+            if args.containerTable:
+                dump.print_container_table(containerTable)                                                        # Dump Container Table
 
             
             # schemaTable = ReFScan.dump_schema_table(f, chkpData["schemaTable"])
