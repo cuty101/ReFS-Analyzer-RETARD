@@ -222,39 +222,35 @@ def dump_rows(f, offset, rootData, headerData):
         keyOffset = keyIndex+offset
         keyOffsetList.append(keyOffset)
 
-    # print("Offset\t\tIndexLen\tKey\tKeyLen\tFlags\tValue\tValueLen")
-    # for key in keyOffsetList:
-    #     f.seek(key)
-    #     hexdump = f.read(4096).hex() # +4 to get len of next index
-    #     print(f"{hex(key)}\t"
-    #           f"{hex(unpack(hexdump[0:8], "<L"))}\t\t"
-    #           f"{hex(unpack(hexdump[8:12], "<B"))}\t"
-    #           f"{hex(unpack(hexdump[12:16],"<B"))}\t"
-    #           f"{hex(unpack(hexdump[16:20], "<B"))}\t"
-    #           f"{hex(unpack(hexdump[20:24], "<B"))}\t"
-    #           f"{hex(unpack(hexdump[24:28], "<B"))}"
-    #           )
+    print("Offset\t\tIndexLen\tKey\tKeyLen\tFlags\tValue\tValueLen")
+    for key in keyOffsetList:
+        f.seek(key)
+        hexdump = f.read(4096).hex() # +4 to get len of next index
+        print(f"{hex(key)}\t"
+              f"{hex(unpack(hexdump[0:8], "<L"))}\t\t"
+              f"{hex(unpack(hexdump[8:12], "<B"))}\t"
+              f"{hex(unpack(hexdump[12:16],"<B"))}\t"
+              f"{hex(unpack(hexdump[16:20], "<B"))}\t"
+              f"{hex(unpack(hexdump[20:24], "<B"))}\t"
+              f"{hex(unpack(hexdump[24:28], "<B"))}"
+              )
     for key in keyOffsetList:
         f.seek(key)
         hexdump = f.read(4096).hex()  # +4 to get len of next index
-        keyValueData = dump_key_value_data(hexdump)
-        print("Offset\t\t\tKey")
-        print(f"{hex(key)}\t\t"
-              f"{hex(keyValueData['entryKey'])}\t"
+        keyValueData = dump_container_key_pair(hexdump)
+        print("Band ID\tLCN\tNo. of Clusters")
+        print(f"{hex(keyValueData['bandID'])}\t"
+              f"{keyValueData['Container LCN']}\t"
+              f"{keyValueData['noOfClusters']}"
               )
-        print("Value")
-        print(f"{hex(keyValueData['entryData'])}\n")
 
     return keyOffsetList
 
-def dump_key_value_data(hexdump):
-    offsetKey = unpack(hexdump[8:12], "<B") * 2
-    keyLen = unpack(hexdump[12:16], "<B") * 2
-    offsetValue = unpack(hexdump[20:24], "<B") * 2
-    valueLen = unpack(hexdump[24:28], "<B") * 2
+def dump_container_key_pair(hexdump):
     keyValueData = {
-        "entryKey": int(hexdump[offsetKey:offsetValue + keyLen], 16),
-        "entryData": int(hexdump[offsetValue:offsetValue + valueLen], 16),
+        "bandID": unpack(hexdump[32:32 + 8], "<L"),
+        "Container LCN": unpack(hexdump[448:464], "<Q"),
+        "noOfClusters": unpack(hexdump[464:480], "<Q"),
     }
 
     return keyValueData
