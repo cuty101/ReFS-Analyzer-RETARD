@@ -112,7 +112,7 @@ def dump_chkp(f, offset, vbrOffset, cluster):
         ptrOffset*=2
         ptr = unpack(hexdump[ptrOffset:ptrOffset+8], "<L")*2
         ptr = unpack(hexdump[ptr:ptr+4],"<H")
-        containerSize = containerTableRows[next(iter(containerTableRows))]["clusterSize"]*2
+        containerSize = containerTableRows['2']["clusterSize"]*2
         vcn = ptr//containerSize
         remainder = int(hex(ptr%(containerSize)),16)
         if vcn == 0:
