@@ -1,4 +1,5 @@
 import struct
+import json
 
 # Function to convert a string to little endian
 def unpack(s, type):
@@ -110,74 +111,60 @@ def dump_chkp(f, offset, vbrOffset, cluster):
     f.seek(offset)
     hexdump = f.read(4096).hex()
 
-    def getContainerRows(containerPtr):
-        rootData, headerData = dump_node_info(f, containerPtr)
-        keyOffsetList, containerRows = dump_rows(f, containerPtr, rootData, headerData)
-        return keyOffsetList, containerRows
+    # def getContainerRows(containerPtr):
+    #     rootData, headerData = dump_node_info(f, containerPtr)
+    #     keyOffsetList, containerRows = dump_rows(f, containerPtr, rootData, headerData)
+    #     return keyOffsetList, containerRows
 
-    def getOffsetFromPtr(ptrOffset):
+    
+    def getOffsetFromPtr(ptrOffset, containerTableRows):
+        print(cluster, offset)
         ptrOffset*=2
         ptr = unpack(hexdump[ptrOffset:ptrOffset+8], "<L")*2
-        ptr = hex(unpack(hexdump[ptr:ptr+4],"<H")*cluster+vbrOffset)
-        ptr = int(ptr, 16)
-        return ptr
+        ptr = unpack(hexdump[ptr:ptr+4],"<H")
+        containerSize = containerTableRows['2']["clusterSize"]*2
+        vcn = ptr//containerSize
+        remainder = int(hex(ptr%(containerSize)),16)
+        if vcn == 0:
+            return remainder*cluster+vbrOffset
+        else:
+            return (containerTableRows[str(vcn)]["containerLCN"]+remainder)*cluster+vbrOffset
 
+    checkPointRef = unpack(hexdump[352:360], "<L")*2
+    containerOffset = unpack(hexdump[checkPointRef:checkPointRef+4], "<H")*cluster+vbrOffset
+    containterTableHeader, containerTableRows = dump_container_table(f, containerOffset)
+    
     chkpVirtualClock = unpack(hexdump[192:208], "<Q")
     allocVirtualClock = unpack(hexdump[208:224], "<Q")
     oldestLogRecordPtr = unpack(hexdump[224:240], "<Q")
 
-    data = {                                                        # Offset    Length  Description
-        "pageHeader": dump_page_header(f, offset),                  # 0x00      80      Page Header
-        "majVer": unpack(hexdump[168:174], "<B"),                   # 0x54      2       Filesystem Major Version
-        "minVer": unpack(hexdump[172:176], "<B"),                   # 0x56      2       Filesystem Mini Version
-        "chkpVirtualClock": hex(chkpVirtualClock),                  # 0x60      8       Checkpoint Virtual Clock, alternates between either CHKP
-        "allocVirtualClock": hex(allocVirtualClock),                # 0x68      8       Allocator Virtual Clock, unsure, but counter seems to alternate between CHKP as well
-        "oldestLogRecordPtr": hex(oldestLogRecordPtr),              # 0x70      8       Pointer to last log record written
+    data = {                                                                # Offset    Length  Description
+        "pageHeader": dump_page_header(f, offset),                          # 0x00      80      Page Header
+        "majVer": unpack(hexdump[168:174], "<B"),                           # 0x54      2       Filesystem Major Version
+        "minVer": unpack(hexdump[172:176], "<B"),                           # 0x56      2       Filesystem Mini Version
+        "chkpVirtualClock": hex(chkpVirtualClock),                          # 0x60      8       Checkpoint Virtual Clock, alternates between either CHKP
+        "allocVirtualClock": hex(allocVirtualClock),                        # 0x68      8       Allocator Virtual Clock, unsure, but counter seems to alternate between CHKP as well
+        "oldestLogRecordPtr": hex(oldestLogRecordPtr),                      # 0x70      8       Pointer to last log record written
         }
     ptrData = {
-        "objIdTable": getOffsetFromPtr(0x94),                       # 0x94      4       Pointer to the Object ID Table Reference
-        "medAllocTable": getOffsetFromPtr(0x98),                    # 0x98      4       Pointer to the Medium Allocator Table Reference
-        "containerAllocTable": getOffsetFromPtr(0x9c),              # 0x9c      4       Pointer to the Container Allocator Table Reference
-        "schemaTable": getOffsetFromPtr(0xa0),                      # 0xa0      4       Pointer to the Schema Table Reference
-        "parentChildTable": getOffsetFromPtr(0xa4),                 # 0xa4      4       Pointer to the Parent Child Table Reference
-        "objIdTableDup": getOffsetFromPtr(0xa8),                    # 0xa8      4       Pointer to the Object ID Table Reference
-        "blockRefCountTable": getOffsetFromPtr(0xac),               # 0xac      4       Pointer to the Block Reference Count Table Reference
-        "containerTable": getOffsetFromPtr(0xb0),                   # 0xb0      4       Pointer to the Container Table Reference
-        "containerTableDup": getOffsetFromPtr(0xb4),                # 0xb4      4       Pointer to the Container Table Duplicate Reference
-        "schemaTableDup": getOffsetFromPtr(0xb8),                   # 0xb8      4       Pointer to the Schema Table Duplicate Reference
-        "containerIndexTable": getOffsetFromPtr(0xbc),              # 0xbc      4       Pointer to the Container Index Table Reference
-        "integrityStateTable": getOffsetFromPtr(0xc0),              # 0xc0      4       Pointer to the Integrity State Table Reference
-        "smallAllocTable": getOffsetFromPtr(0xc4),                  # 0xc4      4       Pointer to the Small Allocator Table Reference
+        "objIdTable": getOffsetFromPtr(0x94, containerTableRows),           # 0x94      4       Pointer to the Object ID Table Reference
+        "medAllocTable": getOffsetFromPtr(0x98, containerTableRows),        # 0x98      4       Pointer to the Medium Allocator Table Reference
+        "containerAllocTable": getOffsetFromPtr(0x9c, containerTableRows),  # 0x9c      4       Pointer to the Container Allocator Table Reference
+        "schemaTable": getOffsetFromPtr(0xa0, containerTableRows),          # 0xa0      4       Pointer to the Schema Table Reference
+        "parentChildTable": getOffsetFromPtr(0xa4, containerTableRows),     # 0xa4      4       Pointer to the Parent Child Table Reference
+        "objIdTableDup": getOffsetFromPtr(0xa8, containerTableRows),        # 0xa8      4       Pointer to the Object ID Table Reference
+        "blockRefCountTable": getOffsetFromPtr(0xac, containerTableRows),   # 0xac      4       Pointer to the Block Reference Count Table Reference
+        "containerTable": getOffsetFromPtr(0xb0, containerTableRows),       # 0xb0      4       Pointer to the Container Table Reference
+        "containerTableDup": getOffsetFromPtr(0xb4, containerTableRows),    # 0xb4      4       Pointer to the Container Table Duplicate Reference
+        "schemaTableDup": getOffsetFromPtr(0xb8, containerTableRows),       # 0xb8      4       Pointer to the Schema Table Duplicate Reference
+        "containerIndexTable": getOffsetFromPtr(0xbc, containerTableRows),  # 0xbc      4       Pointer to the Container Index Table Reference
+        "integrityStateTable": getOffsetFromPtr(0xc0, containerTableRows),  # 0xc0      4       Pointer to the Integrity State Table Reference
+        "smallAllocTable": getOffsetFromPtr(0xc4, containerTableRows),      # 0xc4      4       Pointer to the Small Allocator Table Reference
     }
     ptrData.update(ptrData)
     return data, ptrData
 
-def dump_container_table(f, offset):
-    rootData, headerData = dump_node_info(f, offset)
-    offset = offset+0x50+rootData["size"] # startOfNode + pageHeader + indexRoot = StartOfIndexHeader
-    dump_rows(f, offset, rootData, headerData)
-    
-    data = {
-        "rootData": rootData,
-        "headerData": headerData,
-    }
-    
-    return data
 
-def dump_schema_table(f, offset):
-    f.seek(offset)
-    hexdump = f.read(4096).hex()
-
-    data = {
-        "pageHeader": dump_page_header(f, offset),
-        "schemaID": hexdump[160:168],
-        "schemaSize": hexdump[176:184],
-    }
-    
-    print("\n-------------------Schema Table-------------------")
-    for x,y in data.items():
-        print(f"{x : <30}: {y}")
-    return
 
 
 # Dumps index root and index header for tables
@@ -214,7 +201,7 @@ def dump_node_info(f, offset):
     }
     return rootData, headerData
 
-def dump_rows(f, offset, rootData, headerData):
+def dump_rows(f, offset, headerData):
     f.seek(offset)
     hexdump=f.read(4096).hex()
     keyIndexOffset = offset+headerData['startKey']
@@ -222,41 +209,76 @@ def dump_rows(f, offset, rootData, headerData):
     hexdump = f.read(4096).hex()
     keyCount = headerData['keyEntriesCount']
     keyOffsetList = []
-    containerRows = {}
+    # containerRows = {}
     for i in range(keyCount):
         x = i*8
         keyIndex = unpack(hexdump[x:x+8], '<L') & 0x0000ffff
         keyOffset = keyIndex+offset
         keyOffsetList.append(keyOffset)
 
-    print("Offset\t\tIndexLen\tKey\tKeyLen\tFlags\tValue\tValueLen")
-    for key in keyOffsetList:
-        f.seek(key)
-        hexdump = f.read(4096).hex() # +4 to get len of next index
-        print(f"{hex(key)}\t"
-              f"{hex(unpack(hexdump[0:8], '<L'))}\t\t"
-              f"{hex(unpack(hexdump[8:12], '<B'))}\t"
-              f"{hex(unpack(hexdump[12:16],'<B'))}\t"
-              f"{hex(unpack(hexdump[16:20], '<B'))}\t"
-              f"{hex(unpack(hexdump[20:24], '<B'))}\t"
-              f"{hex(unpack(hexdump[24:28], '<B'))}"
-              )
-    for key in keyOffsetList:
-        f.seek(key)
-        hexdump = f.read(4096).hex()  # +4 to get len of next index
-        keyValueData = dump_container_key_pair(hexdump)
-        containerRows[hex(keyValueData['bandID'])] = {
-            "LCN": hex(keyValueData['Container LCN']),
-            "Number of Clusters": hex(keyValueData['noOfClusters'])
-        }
-    print(containerRows)
-    return keyOffsetList, containerRows
+    # print("Offset\t\tIndexLen\tKey\tKeyLen\tFlags\tValue\tValueLen")
+    # for key in keyOffsetList:
+    #     f.seek(key)
+    #     hexdump = f.read(4096).hex() # +4 to get len of next index
+    #     print(f"{hex(key)}\t"
+    #           f"{hex(unpack(hexdump[0:8], '<L'))}\t\t"
+    #           f"{hex(unpack(hexdump[8:12], '<B'))}\t"
+    #           f"{hex(unpack(hexdump[12:16],'<B'))}\t"
+    #           f"{hex(unpack(hexdump[16:20], '<B'))}\t"
+    #           f"{hex(unpack(hexdump[20:24], '<B'))}\t"
+    #           f"{hex(unpack(hexdump[24:28], '<B'))}"
+    #           )
+    # for key in keyOffsetList:
+    #     f.seek(key)
+    #     hexdump = f.read(4096).hex()  # +4 to get len of next index
+    #     keyValueData = dump_container_key_pair(hexdump)
+    #     containerRows[hex(keyValueData['bandID'])] = {
+    #         "LCN": hex(keyValueData['Container LCN']),
+    #         "Number of Clusters": hex(keyValueData['noOfClusters'])
+    #     }
+    # 
+    return keyOffsetList #, containerRows
 
-def dump_container_key_pair(hexdump):
-    keyValueData = {
-        "bandID": unpack(hexdump[32:32 + 8], "<L"),
-        "Container LCN": unpack(hexdump[448:464], "<Q"),
-        "noOfClusters": unpack(hexdump[464:480], "<Q"),
+# def dump_container_key_pair(hexdump):
+#     keyValueData = {
+#         "bandID": unpack(hexdump[32:32 + 8], "<L"),
+#         "Container LCN": unpack(hexdump[448:464], "<Q"),
+#         "noOfClusters": unpack(hexdump[464:480], "<Q"),
+#     }
+
+#     return keyValueData
+
+def dump_container_table(f, offset):
+    rootData, headerData = dump_node_info(f, offset)
+    offset = offset+0x50+rootData["size"] # startOfNode + pageHeader + indexRoot = StartOfIndexHeader
+    keyOffsetList = dump_rows(f, offset, headerData)
+    data = {
+        "pageHeader": dump_page_header(f, offset),
+        "rootData": rootData,
+        "headerData": headerData,
     }
+    rows = {}
+    for i in keyOffsetList:
+        f.seek(i)
+        hexdump = f.read(1024).hex()
+        info = {
+            "containerLCN": unpack(hexdump[448:464],"<Q"),
+            "clusterSize": unpack(hexdump[464:480], "<Q"),
+        }
+        rows.update({f"{unpack(hexdump[32:48],'<Q')}":info})
+    return data, rows
 
-    return keyValueData
+def dump_schema_table(f, offset):
+    f.seek(offset)
+    hexdump = f.read(4096).hex()
+
+    data = {
+        "pageHeader": dump_page_header(f, offset),
+        "schemaID": hexdump[160:168],
+        "schemaSize": hexdump[176:184],
+    }
+    
+    print("\n-------------------Schema Table-------------------")
+    for x,y in data.items():
+        print(f"{x : <30}: {y}")
+    return
