@@ -47,7 +47,6 @@ def main():
         with open(image, "rb") as f:
             print (f"Analysing image: {image}")
 
-            # Get Volume Boot Record
             vbrOffset = ReFScan.get_offset(f, "52654653000000")                                                     # Get Volume Boot Record (VBR) Offset
             vbrData = ReFScan.dump_vbr(f, vbrOffset)                                                                # VBR Data
             cluster = vbrData["bytesPerSector"] * vbrData["sectorsPerCluster"]                                      # Cluster Size

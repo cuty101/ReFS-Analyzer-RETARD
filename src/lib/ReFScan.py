@@ -181,44 +181,44 @@ def dump_node_info(f, offset):
     if hexdump[160:168] == "08000000":
         rootData={
             "pageHeader": dump_page_header(f, offset),
-            "size": unpack(hexdump[160:168], "<L"),                 # Non root nodes will have size of 8
+            "size": unpack(hexdump[160:168], '<L'),                 # Non root nodes will have size of 8
         }
     else:
         rootData = {                                                # Offset    Length  Description
             "pageHeader": dump_page_header(f, offset),              # 0x00      80      Page Header
-            "size": unpack(hexdump[160:168], "<L"),                 # 0x50      4       Size
-            "sizeOfFixedComponent": unpack(hexdump[168:172], "<B"), # 0x54      2       Size of the fixed component of the index root (should be 0x28)
-            "tableSchema": unpack(hexdump[184:192], "<L"),          # 0x5C      4       Schema of the Table
-            "extents": unpack(hexdump[208:224], "<Q"),              # 0x68      8       Number of extents in the table
-            "rows": unpack(hexdump[224:240], "<Q"),                 # 0x70      8       Number of rows in the table
+            "size": unpack(hexdump[160:168], '<L'),                 # 0x50      4       Size
+            "sizeOfFixedComponent": unpack(hexdump[168:172], '<B'), # 0x54      2       Size of the fixed component of the index root (should be 0x28)
+            "tableSchema": unpack(hexdump[184:192], '<L'),          # 0x5C      4       Schema of the Table
+            "extents": unpack(hexdump[208:224], '<Q'),              # 0x68      8       Number of extents in the table
+            "rows": unpack(hexdump[224:240], '<Q'),                 # 0x70      8       Number of rows in the table
         }
 
     startHeader = rootData["size"] + 0x50
     f.seek(startHeader + offset)
     hexdump = f.read(4096).hex()
     headerData = {                                                  # Offset    Length  Description
-        "startData": unpack(hexdump[0:8], "<L"),                    # 0x00      4       Offset to the start of the data area
-        "endData": unpack(hexdump[8:16], "<L"),                     # 0x04      4       Offset of the end of the data area
-        "freeBytes": unpack(hexdump[16:24], "<L"),                  # 0x08      4       Free bytes in the node
-        "height": unpack(hexdump[24:26], "<B"),                     # 0x0c      1       Height of node
-        "flag": unpack(hexdump[26:28], "<B"),                       # 0x0d      1       Flag
-        "startKey": unpack(hexdump[32:40], "<L"),                   # 0x10      4       Start of the key index
-        "keyEntriesCount": unpack(hexdump[40:48], "<L"),            # 0x14      4       Number of entries in the key index
-        "endKey": unpack(hexdump[64:72], "<L"),                     # 0x20      4       End of the key index
+        "startData": unpack(hexdump[0:8], '<L'),                    # 0x00      4       Offset to the start of the data area
+        "endData": unpack(hexdump[8:16], '<L'),                     # 0x04      4       Offset of the end of the data area
+        "freeBytes": unpack(hexdump[16:24], '<L'),                  # 0x08      4       Free bytes in the node
+        "height": unpack(hexdump[24:26], '<B'),                     # 0x0c      1       Height of node
+        "flag": unpack(hexdump[26:28], '<B'),                       # 0x0d      1       Flag
+        "startKey": unpack(hexdump[32:40], '<L'),                   # 0x10      4       Start of the key index
+        "keyEntriesCount": unpack(hexdump[40:48], '<L'),            # 0x14      4       Number of entries in the key index
+        "endKey": unpack(hexdump[64:72], '<L'),                     # 0x20      4       End of the key index
     }
     return rootData, headerData
 
 def dump_rows(f, offset, rootData, headerData):
     f.seek(offset)
     hexdump=f.read(4096).hex()
-    keyIndexOffset = offset+headerData["startKey"]
+    keyIndexOffset = offset+headerData['startKey']
     f.seek(keyIndexOffset)
     hexdump = f.read(4096).hex()
-    keyCount = headerData["keyEntriesCount"]
+    keyCount = headerData['keyEntriesCount']
     keyOffsetList = []
     for i in range(keyCount):
         x = i*8
-        keyIndex = unpack(hexdump[x:x+8], "<L") & 0x0000ffff
+        keyIndex = unpack(hexdump[x:x+8], '<L') & 0x0000ffff
         keyOffset = keyIndex+offset
         keyOffsetList.append(keyOffset)
 
@@ -227,12 +227,12 @@ def dump_rows(f, offset, rootData, headerData):
         f.seek(key)
         hexdump = f.read(4096).hex() # +4 to get len of next index
         print(f"{hex(key)}\t"
-              f"{hex(unpack(hexdump[0:8], "<L"))}\t\t"
-              f"{hex(unpack(hexdump[8:12], "<B"))}\t"
-              f"{hex(unpack(hexdump[12:16],"<B"))}\t"
-              f"{hex(unpack(hexdump[16:20], "<B"))}\t"
-              f"{hex(unpack(hexdump[20:24], "<B"))}\t"
-              f"{hex(unpack(hexdump[24:28], "<B"))}"
+              f"{hex(unpack(hexdump[0:8], '<L'))}\t\t"
+              f"{hex(unpack(hexdump[8:12], '<B'))}\t"
+              f"{hex(unpack(hexdump[12:16],'<B'))}\t"
+              f"{hex(unpack(hexdump[16:20], '<B'))}\t"
+              f"{hex(unpack(hexdump[20:24], '<B'))}\t"
+              f"{hex(unpack(hexdump[24:28], '<B'))}"
               )
     for key in keyOffsetList:
         f.seek(key)
@@ -248,9 +248,9 @@ def dump_rows(f, offset, rootData, headerData):
 
 def dump_container_key_pair(hexdump):
     keyValueData = {
-        "bandID": unpack(hexdump[32:32 + 8], "<L"),
-        "Container LCN": unpack(hexdump[448:464], "<Q"),
-        "noOfClusters": unpack(hexdump[464:480], "<Q"),
+        "bandID": unpack(hexdump[32:32 + 8], '<L'),
+        "Container LCN": unpack(hexdump[448:464], '<Q'),
+        "noOfClusters": unpack(hexdump[464:480], '<Q'),
     }
 
     return keyValueData
