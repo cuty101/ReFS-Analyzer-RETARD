@@ -76,7 +76,7 @@ def print_container_table(data):
         f"  LCN2                  : {page_header['lcn2']}\n"
         f"  LCN3                  : {page_header['lcn3']}\n"
         f"  Table ID High         : {page_header['tableIdHigh']}\n"
-        f"  Table ID Low          : {page_header['tableIdLow']}\n"
+        f"  Table ID Low          : {page_header['tableIdLow']}\n\n"
         f"Size of Table: {data['rootData']['size']}\n"
         f"Size of Fixed Component: {data['rootData']['sizeOfFixedComponent']}\n"
         f"Table Schema: {data['rootData']['tableSchema']}\n"
