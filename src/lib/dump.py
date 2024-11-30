@@ -30,9 +30,18 @@ def print_supb(data):
         )
 
 def print_chkp(data, ptrData):
+    page_header = data['pageHeader']
+
     print(
         "-----------------Checkpoint Data-----------------\n"
-        f"Page Header: {data['pageHeader']}\n"
+        "Page Header Information:\n"
+        f"  Volume Signature      : {page_header['vol_sig']}\n"
+        f"  LCN0                  : {page_header['lcn0']}\n"
+        f"  LCN1                  : {page_header['lcn1']}\n"
+        f"  LCN2                  : {page_header['lcn2']}\n"
+        f"  LCN3                  : {page_header['lcn3']}\n"
+        f"  Table ID High         : {page_header['tableIdHigh']}\n"
+        f"  Table ID Low          : {page_header['tableIdLow']}\n\n"
         f"Version: {data['majVer']}.{data['minVer']}\n"
         f"CHKP Virtual Clock: {data['chkpVirtualClock']}\n"
         f"Allocator Virtual Clock: {data['allocVirtualClock']}\n"
@@ -57,9 +66,17 @@ def print_chkp(data, ptrData):
         )
     
 def print_container_table(data):
+    page_header = data['rootData']['pageHeader']
     print(
         "----------------Container Table----------------\n"
-        f"Page Header: {data['rootData']['pageHeader']}\n"
+        "Page Header Information:\n"
+        f"  Volume Signature      : {page_header['vol_sig']}\n"
+        f"  LCN0                  : {page_header['lcn0']}\n"
+        f"  LCN1                  : {page_header['lcn1']}\n"
+        f"  LCN2                  : {page_header['lcn2']}\n"
+        f"  LCN3                  : {page_header['lcn3']}\n"
+        f"  Table ID High         : {page_header['tableIdHigh']}\n"
+        f"  Table ID Low          : {page_header['tableIdLow']}\n"
         f"Size of Table: {data['rootData']['size']}\n"
         f"Size of Fixed Component: {data['rootData']['sizeOfFixedComponent']}\n"
         f"Table Schema: {data['rootData']['tableSchema']}\n"
