@@ -108,19 +108,16 @@ def dump_chkp(f, offset, vbrOffset, cluster):
     f.seek(offset)
     hexdump = f.read(4096).hex()
 
-    def getOffsetFromPtr(ptrOffset, containerTableRows):
+    def getOffsetFromPtr(ptrOffset, containerTableRows, skip=False):
         ptrOffset*=2
         ptr = unpack(hexdump[ptrOffset:ptrOffset+8], "<L")*2
         ptr = unpack(hexdump[ptr:ptr+4],"<H")
+        if(skip):
+            return ptr*cluster+vbrOffset
         containerSize = containerTableRows['2']["clusterSize"]*2
         vcn = ptr//containerSize
         remainder = int(hex(ptr%(containerSize)),16)
-        if vcn == 0:
-            return remainder*cluster+vbrOffset
-        if vcn == 1:
-            return vcn*cluster+vbrOffset
-        else:
-            return (containerTableRows[str(vcn)]["containerLCN"]+remainder)*cluster+vbrOffset
+        return (containerTableRows[str(vcn)]["containerLCN"]+remainder)*cluster+vbrOffset
 
     checkPointRef = unpack(hexdump[352:360], "<L")*2
     containerOffset = unpack(hexdump[checkPointRef:checkPointRef+4], "<H")*cluster+vbrOffset
@@ -146,12 +143,12 @@ def dump_chkp(f, offset, vbrOffset, cluster):
         "parentChildTable": getOffsetFromPtr(0xa4, containerTableRows),     # 0xa4      4       Pointer to the Parent Child Table Reference
         "objIdTableDup": getOffsetFromPtr(0xa8, containerTableRows),        # 0xa8      4       Pointer to the Object ID Table Reference
         "blockRefCountTable": getOffsetFromPtr(0xac, containerTableRows),   # 0xac      4       Pointer to the Block Reference Count Table Reference
-        "containerTable": getOffsetFromPtr(0xb0, containerTableRows),       # 0xb0      4       Pointer to the Container Table Reference
-        "containerTableDup": getOffsetFromPtr(0xb4, containerTableRows),    # 0xb4      4       Pointer to the Container Table Duplicate Reference
+        "containerTable": getOffsetFromPtr(0xb0, containerTableRows, True),       # 0xb0      4       Pointer to the Container Table Reference
+        "containerTableDup": getOffsetFromPtr(0xb4, containerTableRows, True),    # 0xb4      4       Pointer to the Container Table Duplicate Reference
         "schemaTableDup": getOffsetFromPtr(0xb8, containerTableRows),       # 0xb8      4       Pointer to the Schema Table Duplicate Reference
         "containerIndexTable": getOffsetFromPtr(0xbc, containerTableRows),  # 0xbc      4       Pointer to the Container Index Table Reference
         "integrityStateTable": getOffsetFromPtr(0xc0, containerTableRows),  # 0xc0      4       Pointer to the Integrity State Table Reference
-        "smallAllocTable": getOffsetFromPtr(0xc4, containerTableRows),      # 0xc4      4       Pointer to the Small Allocator Table Reference
+        "smallAllocTable": getOffsetFromPtr(0xc4, containerTableRows, True),      # 0xc4      4       Pointer to the Small Allocator Table Reference
     }
     ptrData.update(ptrData)
     return data, ptrData
