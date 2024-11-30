@@ -109,14 +109,19 @@ def dump_supb(f, offset, cluster):
 def dump_chkp(f, offset, vbrOffset, cluster):
     f.seek(offset)
     hexdump = f.read(4096).hex()
-    
+
+    def getContainerRows(containerPtr):
+        rootData, headerData = dump_node_info(f, containerPtr)
+        keyOffsetList, containerRows = dump_rows(f, containerPtr, rootData, headerData)
+        return keyOffsetList, containerRows
+
     def getOffsetFromPtr(ptrOffset):
         ptrOffset*=2
         ptr = unpack(hexdump[ptrOffset:ptrOffset+8], "<L")*2
         ptr = hex(unpack(hexdump[ptr:ptr+4],"<H")*cluster+vbrOffset)
         ptr = int(ptr, 16)
         return ptr
-    
+
     chkpVirtualClock = unpack(hexdump[192:208], "<Q")
     allocVirtualClock = unpack(hexdump[208:224], "<Q")
     oldestLogRecordPtr = unpack(hexdump[224:240], "<Q")
@@ -129,21 +134,22 @@ def dump_chkp(f, offset, vbrOffset, cluster):
         "allocVirtualClock": hex(allocVirtualClock),                # 0x68      8       Allocator Virtual Clock, unsure, but counter seems to alternate between CHKP as well
         "oldestLogRecordPtr": hex(oldestLogRecordPtr),              # 0x70      8       Pointer to last log record written
         }
-    ptrData={
+    ptrData = {
         "objIdTable": getOffsetFromPtr(0x94),                       # 0x94      4       Pointer to the Object ID Table Reference
         "medAllocTable": getOffsetFromPtr(0x98),                    # 0x98      4       Pointer to the Medium Allocator Table Reference
-        "containerAllocTable": getOffsetFromPtr(0x9c),              # 0x9c      4       Pointer to the Container Allcator Table Reference
+        "containerAllocTable": getOffsetFromPtr(0x9c),              # 0x9c      4       Pointer to the Container Allocator Table Reference
         "schemaTable": getOffsetFromPtr(0xa0),                      # 0xa0      4       Pointer to the Schema Table Reference
         "parentChildTable": getOffsetFromPtr(0xa4),                 # 0xa4      4       Pointer to the Parent Child Table Reference
         "objIdTableDup": getOffsetFromPtr(0xa8),                    # 0xa8      4       Pointer to the Object ID Table Reference
         "blockRefCountTable": getOffsetFromPtr(0xac),               # 0xac      4       Pointer to the Block Reference Count Table Reference
         "containerTable": getOffsetFromPtr(0xb0),                   # 0xb0      4       Pointer to the Container Table Reference
-        "containerTableDup": getOffsetFromPtr(0xb4),                # 0xb4      4       Pointer to the Container Table Duplicate Reference 
+        "containerTableDup": getOffsetFromPtr(0xb4),                # 0xb4      4       Pointer to the Container Table Duplicate Reference
         "schemaTableDup": getOffsetFromPtr(0xb8),                   # 0xb8      4       Pointer to the Schema Table Duplicate Reference
         "containerIndexTable": getOffsetFromPtr(0xbc),              # 0xbc      4       Pointer to the Container Index Table Reference
         "integrityStateTable": getOffsetFromPtr(0xc0),              # 0xc0      4       Pointer to the Integrity State Table Reference
         "smallAllocTable": getOffsetFromPtr(0xc4),                  # 0xc4      4       Pointer to the Small Allocator Table Reference
     }
+    ptrData.update(ptrData)
     return data, ptrData
 
 def dump_container_table(f, offset):
@@ -216,6 +222,7 @@ def dump_rows(f, offset, rootData, headerData):
     hexdump = f.read(4096).hex()
     keyCount = headerData['keyEntriesCount']
     keyOffsetList = []
+    containerRows = {}
     for i in range(keyCount):
         x = i*8
         keyIndex = unpack(hexdump[x:x+8], '<L') & 0x0000ffff
@@ -238,19 +245,18 @@ def dump_rows(f, offset, rootData, headerData):
         f.seek(key)
         hexdump = f.read(4096).hex()  # +4 to get len of next index
         keyValueData = dump_container_key_pair(hexdump)
-        print("Band ID\tLCN\tNo. of Clusters")
-        print(f"{hex(keyValueData['bandID'])}\t"
-              f"{keyValueData['Container LCN']}\t"
-              f"{keyValueData['noOfClusters']}"
-              )
-
-    return keyOffsetList
+        containerRows[hex(keyValueData['bandID'])] = {
+            "LCN": hex(keyValueData['Container LCN']),
+            "Number of Clusters": hex(keyValueData['noOfClusters'])
+        }
+    print(containerRows)
+    return keyOffsetList, containerRows
 
 def dump_container_key_pair(hexdump):
     keyValueData = {
-        "bandID": unpack(hexdump[32:32 + 8], '<L'),
-        "Container LCN": unpack(hexdump[448:464], '<Q'),
-        "noOfClusters": unpack(hexdump[464:480], '<Q'),
+        "bandID": unpack(hexdump[32:32 + 8], "<L"),
+        "Container LCN": unpack(hexdump[448:464], "<Q"),
+        "noOfClusters": unpack(hexdump[464:480], "<Q"),
     }
 
     return keyValueData
