@@ -45,7 +45,6 @@ def print_chkp(data, ptrData):
         f"Version: {data['majVer']}.{data['minVer']}\n"
         f"CHKP Virtual Clock: {data['chkpVirtualClock']}\n"
         f"Allocator Virtual Clock: {data['allocVirtualClock']}\n"
-        f"Last Log Record Pointer: {data['oldestLogRecordPtr']}\n"
         "---------------End Checkpoint Data---------------\n\n"
         
         "------------------Pointer Data------------------\n"
