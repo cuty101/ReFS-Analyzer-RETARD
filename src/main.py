@@ -28,14 +28,14 @@ def main():
         help="Dump the Checkpoint (CHKP)",
     )
     parser.add_argument(
-        "-ct", "--containerTable",
+        "-ct", "--conTable",
         action="store_true",
         help="Dump the Container Table",
     )
 
     args = parser.parse_args()
 
-    action = [args.vbr, args.supb, args.chkp, args.containerTable]
+    action = [args.vbr, args.supb, args.chkp, args.conTable]
 
     if not any(action):
         print("\nError: No action specified. Use -h or --help for help.\n")
@@ -64,19 +64,9 @@ def main():
                 dump.print_chkp(chkpData, ptrData)                                                               # Dump Checkpoint
                 print("-----------------Checkpoint 1-----------------\n")
                 dump.print_chkp(chkpData1, ptrData1)                                                             # Dump Checkpoint 1
-            if args.containerTable:
-                dump.print_container_table(containerTable)                                                        # Dump Container Table
-
+            if args.conTable:
+                dump.print_container_table(containerTable, containerTableRows)                                                        # Dump Container Table
             
-            # schemaTable = ReFScan.dump_schema_table(f, chkpData["schemaTable"])
-            
-            # print("\n\n")
-            # for i in ptrData.keys():
-            #     print(f"{i: <30}: {ReFScan.dump_page_header(f, ptrData[i])}")
-            # print("\n\n")
-            # for i in chkpData1.keys():
-            #     print(f"{i: <30}: {ReFScan.dump_page_header(f, chkpData1[i])}")
-            # return 0
     except FileNotFoundError:
         print(f"Error: The file '{image}' was not found.")
     except Exception as e:

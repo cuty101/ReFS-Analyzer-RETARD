@@ -64,7 +64,7 @@ def print_chkp(data, ptrData):
         "----------------End Pointer Data----------------\n"
         )
     
-def print_container_table(data):
+def print_container_table(data, rows):
     page_header = data['rootData']['pageHeader']
     print(
         "----------------Container Table----------------\n"
@@ -89,5 +89,9 @@ def print_container_table(data):
         f"Start Key: {hex(data['headerData']['startKey'])}\n"
         f"Key Entries Count: {hex(data['headerData']['keyEntriesCount'])}\n"
         f"End Key: {hex(data['headerData']['endKey'])}\n"
-        "--------------End Container Table--------------\n"
-    )
+        "--------------End Container Table--------------\n\n"
+        "--------------Container Table Rows-------------\n"
+        "BandID\t Container Offset Container Size"
+        )
+    for x,y in rows.items():
+        print(f"{hex(int(x)):<6}\t {hex(y['containerLCN']*65536):<17}{y['clusterSize']}")
